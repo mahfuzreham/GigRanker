@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Http;
 
 final class Bep20UsdtVerifier implements PaymentVerifier
 {
-    private const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a3dfc5b5a';
+    private const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 
     public function verify(Payment $payment): PaymentVerificationResult
     {
