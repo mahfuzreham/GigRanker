@@ -11,8 +11,12 @@
         <label for="name">Project Name *</label>
         <input id="name" name="name" value="{{ old('name') }}" maxlength="120" required placeholder="My cPanel Server Support Gig">
 
-        <label for="gig_url">Gig URL *</label>
+        <label for="gig_url">Fiverr Gig URL *</label>
         <input id="gig_url" type="url" name="gig_url" value="{{ old('gig_url') }}" maxlength="2048" required placeholder="https://www.fiverr.com/...">
+
+        <label for="site_url">Your Marketing Website URL</label>
+        <input id="site_url" type="url" name="site_url" value="{{ old('site_url') }}" maxlength="2048" placeholder="https://example.com">
+        <p class="muted">Optional now. Add the final domain before publishing so canonical URLs and sitemap.xml use your own website.</p>
 
         <label for="gig_title">Gig Title</label>
         <input id="gig_title" name="gig_title" value="{{ old('gig_title') }}" maxlength="255" placeholder="I will manage your Linux VPS server">
