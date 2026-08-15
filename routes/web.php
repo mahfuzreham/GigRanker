@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\WebsiteController;
 use Illuminate\Support\Facades\Route;
@@ -26,16 +27,12 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [ProjectController::class, 'index'])->name('dashboard');
     Route::get('/billing/plans', [BillingController::class, 'index'])->name('billing.plans');
-    Route::post('/billing/select', [BillingController::class, 'select'])
-        ->middleware('throttle:10,1')
-        ->name('billing.select');
+    Route::post('/billing/select', [BillingController::class, 'select'])->middleware('throttle:10,1')->name('billing.select');
+    Route::get('/billing/pay', [PaymentController::class, 'create'])->middleware('throttle:10,1')->name('payments.create');
+    Route::post('/billing/payments', [PaymentController::class, 'store'])->middleware('throttle:5,10')->name('payments.store');
     Route::get('/projects/create', [ProjectController::class, 'create'])->name('projects.create');
     Route::post('/projects', [ProjectController::class, 'store'])->middleware('throttle:20,1')->name('projects.store');
-    Route::post('/projects/{project}/generate', [ProjectController::class, 'generate'])
-        ->middleware('throttle:3,10')
-        ->name('projects.generate');
+    Route::post('/projects/{project}/generate', [ProjectController::class, 'generate'])->middleware('throttle:3,10')->name('projects.generate');
     Route::get('/projects/{project}/preview', [WebsiteController::class, 'preview'])->name('projects.preview');
-    Route::get('/projects/{project}/export', [WebsiteController::class, 'export'])
-        ->middleware('throttle:5,10')
-        ->name('projects.export');
+    Route::get('/projects/{project}/export', [WebsiteController::class, 'export'])->middleware('throttle:5,10')->name('projects.export');
 });
