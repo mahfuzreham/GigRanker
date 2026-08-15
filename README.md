@@ -34,6 +34,7 @@ GigRanker is a Laravel SaaS for freelancers and agencies who want to build SEO-f
 - cPanel deployment configuration on secure API port **2083**
 - Explicit Admin approval before production deployment
 - Persistent **Deployment History & Audit Log**
+- Admin-approved **one-click rollback to a previous successful release**
 
 ## AI provider setup
 
@@ -113,7 +114,7 @@ The current deployment center intentionally does **not** auto-deploy merely beca
 Every deployment-center action is recorded in `deployment_logs` and shown in **Admin → Deployment / Update Center**. The latest 30 records are displayed with:
 
 - Admin/user who performed the action
-- Action (`settings_saved`, `github_check`, `cpanel_test`, `deploy`)
+- Action (`settings_saved`, `github_check`, `cpanel_test`, `deploy`, `rollback`)
 - Success/failed status
 - Repository and branch
 - Git commit SHA and message when available
@@ -121,6 +122,22 @@ Every deployment-center action is recorded in `deployment_logs` and shown in **A
 - Safe diagnostic details for failed actions
 
 Secrets such as cPanel credentials and GitHub tokens are never written to the audit log. Deployment failures are recorded as failed audit events so an administrator can review what happened before retrying.
+
+### One-click rollback
+
+The Admin deployment screen lists previously successful `deploy` releases. An administrator can select one and confirm **Rollback**. The application does not force-move the production branch backwards. Instead it:
+
+1. Reads the exact Git tree from the selected successful commit.
+2. Creates a new GitHub commit whose parent is the current branch head but whose tree matches the selected release.
+3. Updates the configured branch with that new fast-forward rollback commit.
+4. Runs the same cPanel `VersionControl` update and `VersionControlDeployment` flow used by normal approved releases.
+5. Records the rollback, target release, resulting commit and success/failure status in the deployment audit log.
+
+This preserves Git history and keeps cPanel's documented fast-forward deployment model intact. cPanel's `VersionControlDeployment::create` requires a clean cPanel-managed repository and deploys the repository state through the checked-in `.cpanel.yml` workflow. citeturn2search0turn4search2
+
+**Database safety:** rollback is a code rollback only. It does **not** automatically reverse Laravel database migrations, delete customer data, or restore database contents. Review migration compatibility and use a database backup/restore procedure before rolling back releases that changed the schema.
+
+**Admin confirmation is mandatory** and only successful deployment records already stored in `deployment_logs` can be selected. Arbitrary commit hashes are not accepted from the rollback form.
 
 ## cPanel installation
 
@@ -224,7 +241,7 @@ php artisan route:cache
 php artisan view:cache
 ```
 
-Do not run `git reset --hard` on production unless the rollback procedure has been reviewed and the database/configuration impact is understood.
+Do not run `git reset --hard` on production. Use the Admin-approved rollback workflow so the rollback is recorded and the resulting Git commit remains part of branch history.
 
 ## Customer release workflow
 
@@ -276,12 +293,14 @@ For Binance, use minimum required permissions and keep withdrawals disabled unle
 - Keep dependencies updated.
 - Run tests and security checks before releases.
 - Back up the database before migrations or production updates.
+- Do not allow arbitrary rollback commit hashes from user-controlled form input.
+- Keep rollback restricted to authenticated Admin users.
 
 ## Remaining release checklist
 
-- [ ] Deployment history persistence and audit log — implemented; requires migration in deployment environment
-- [ ] One-click rollback with backup protection
-- [ ] Pre-deployment backup + restore test
+- [x] Deployment history persistence and audit log — implemented; requires migration in deployment environment
+- [x] One-click code rollback to a previously successful release — implemented; database restore remains a separate safety procedure
+- [ ] Pre-deployment database backup + restore test
 - [ ] Post-deployment health check
 - [ ] Discord/Telegram deployment notifications
 - [ ] Full AI credit/token accounting validation
@@ -297,7 +316,7 @@ For Binance, use minimum required permissions and keep withdrawals disabled unle
 
 ## Verification note
 
-This deployment-history change has been reviewed at source level after writing the migration, model, audit service, controller integration and Admin UI. A live Laravel migration/test run was not executed from this environment, so production verification still requires running `php artisan migrate --force` and the project's test suite in the target environment.
+The rollback implementation was reviewed at source level and wired through the Admin controller, route, release-selection UI, GitHub commit/tree API flow and cPanel deployment path. GitHub Actions Security Checks were triggered for the latest source changes; the run was still in progress at the time of this automation run, so a passing CI result is not claimed here. A live cPanel deployment and rollback cannot be verified without the configured production cPanel credentials and target environment.
 
 ## Repository
 
