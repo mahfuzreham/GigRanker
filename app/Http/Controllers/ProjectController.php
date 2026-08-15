@@ -42,6 +42,18 @@ class ProjectController extends Controller
             'github_url' => ['nullable', 'url', 'max:2048'],
         ]);
 
+        $gigHost = strtolower((string) parse_url($validated['gig_url'], PHP_URL_HOST));
+        if (! in_array($gigHost, ['fiverr.com', 'www.fiverr.com'], true)) {
+            return back()->withInput()->withErrors(['gig_url' => 'Please provide a valid Fiverr gig URL.']);
+        }
+
+        if (! empty($validated['fiverr_profile_url'])) {
+            $profileHost = strtolower((string) parse_url($validated['fiverr_profile_url'], PHP_URL_HOST));
+            if (! in_array($profileHost, ['fiverr.com', 'www.fiverr.com'], true)) {
+                return back()->withInput()->withErrors(['fiverr_profile_url' => 'Please provide a valid Fiverr profile URL.']);
+            }
+        }
+
         $validated['keywords'] = collect(preg_split('/[,\n]+/', (string) ($validated['keywords'] ?? '')))
             ->map(fn (string $keyword): string => trim($keyword))
             ->filter()
