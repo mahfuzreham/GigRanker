@@ -10,8 +10,12 @@ final class PaymentVerifierManager
 {
     public function for(Payment $payment): PaymentVerifier
     {
-        // Provider adapters can be enabled later through configuration. Until
-        // credentials and destination details are configured, never auto-approve.
+        if ($payment->method === 'bep20' && filter_var(env('BEP20_AUTO_VERIFY', false), FILTER_VALIDATE_BOOL)) {
+            return app(Bep20UsdtVerifier::class);
+        }
+
+        // bKash remains manual until official merchant credentials and the
+        // provider's supported callback/verification flow are configured.
         return app(DisabledPaymentVerifier::class);
     }
 }
