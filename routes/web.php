@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 use App\Http\Controllers\AdminAiController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminFeatureUpdateController;
 use App\Http\Controllers\AdminPaymentController;
 use App\Http\Controllers\AdminSettingsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\FeatureUpdateController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\WebsiteController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'home')->name('home');
+Route::get('/updates', [FeatureUpdateController::class, 'index'])->name('updates');
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1')->name('login.store');
@@ -46,5 +49,7 @@ Route::middleware('auth')->group(function (): void {
         Route::get('/ai', [AdminAiController::class, 'edit'])->name('ai');
         Route::post('/ai', [AdminAiController::class, 'update'])->middleware('throttle:10,1')->name('ai.update');
         Route::post('/ai/test', [AdminAiController::class, 'test'])->middleware('throttle:5,10')->name('ai.test');
+        Route::get('/feature-updates', [AdminFeatureUpdateController::class, 'index'])->name('feature-updates');
+        Route::post('/feature-updates', [AdminFeatureUpdateController::class, 'store'])->middleware('throttle:20,1')->name('feature-updates.store');
     });
 });
