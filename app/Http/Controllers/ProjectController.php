@@ -35,7 +35,7 @@ class ProjectController extends Controller
             'gig_title' => ['nullable', 'string', 'max:255'],
             'gig_description' => ['nullable', 'string', 'max:10000'],
             'service_category' => ['nullable', 'string', 'max:120'],
-            'target_country' => ['nullable', 'string', 'max:120'],
+            'target_country' => ['required', 'string', 'in:US,GB,EU,BD,PK,IN'],
             'target_city' => ['nullable', 'string', 'max:120'],
             'keywords' => ['nullable', 'string', 'max:2000'],
             'brand_name' => ['nullable', 'string', 'max:160'],
@@ -55,16 +55,9 @@ class ProjectController extends Controller
             }
         }
 
-        $validated['site_url'] = ! empty($validated['site_url'])
-            ? rtrim($validated['site_url'], '/')
-            : null;
-
+        $validated['site_url'] = ! empty($validated['site_url']) ? rtrim($validated['site_url'], '/') : null;
         $validated['keywords'] = collect(preg_split('/[,\n]+/', (string) ($validated['keywords'] ?? '')))
-            ->map(fn (string $keyword): string => trim($keyword))
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
+            ->map(fn (string $keyword): string => trim($keyword))->filter()->unique()->values()->all();
 
         $project = Auth::user()->projects()->create($validated + ['status' => 'draft']);
 
@@ -74,34 +67,22 @@ class ProjectController extends Controller
     public function generate(Request $request, Project $project, GigSeoGenerator $generator): RedirectResponse
     {
         abort_unless($project->user_id === Auth::id(), 404);
-
-        $validated = $request->validate([
-            'page_count' => ['nullable', 'integer', 'min:1', 'max:20'],
-        ]);
-
+        $validated = $request->validate(['page_count' => ['nullable', 'integer', 'min:1', 'max:20']]);
         try {
             $project->update(['status' => 'generating']);
             $pages = $generator->generate($project, (int) ($validated['page_count'] ?? 10));
-
             if ($pages === []) {
                 $project->update(['status' => 'failed']);
                 return back()->withErrors(['generation' => 'The AI did not return any usable pages.']);
             }
-
             foreach ($pages as $page) {
-                $project->pages()->updateOrCreate(
-                    ['slug' => $page['slug']],
-                    $page + ['status' => 'draft'],
-                );
+                $project->pages()->updateOrCreate(['slug' => $page['slug']], $page + ['status' => 'draft']);
             }
-
             $project->update(['status' => 'generated']);
-
             return back()->with('success', count($pages).' SEO pages generated successfully.');
         } catch (Throwable $exception) {
             report($exception);
             $project->update(['status' => 'failed']);
-
             return back()->withErrors(['generation' => 'Generation is temporarily unavailable. Please try again later.']);
         }
     }
