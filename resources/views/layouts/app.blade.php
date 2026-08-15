@@ -19,6 +19,7 @@
 <header><div class="wrap nav"><a class="brand" href="{{ route('home') }}">Gig<span>Ranker</span></a><nav>
 @auth
 <a href="{{ route('dashboard') }}">Dashboard</a><a href="{{ route('billing.plans') }}">Plans</a><a href="{{ route('projects.create') }}">New Project</a>
+@if(auth()->user()->is_admin)<a href="{{ route('admin.dashboard') }}">Admin</a>@endif
 <form method="POST" action="{{ route('logout') }}">@csrf<button class="btn secondary" type="submit">Logout</button></form>
 @else
 <a href="{{ route('login') }}">Login</a><a class="btn" href="{{ route('register') }}">Get Started</a>
