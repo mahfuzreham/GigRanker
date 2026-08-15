@@ -21,6 +21,9 @@ jobs:
           extensions: mbstring, dom, curl, fileinfo, sqlite3, pdo_sqlite
           coverage: none
 
+      - name: Prepare Laravel writable directories
+        run: mkdir -p bootstrap/cache storage/framework/cache storage/framework/sessions storage/framework/views
+
       - name: Install Composer dependencies
         run: composer install --no-interaction --no-progress --prefer-dist
 
