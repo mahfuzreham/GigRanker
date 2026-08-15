@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\AdminAiController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminPaymentController;
 use App\Http\Controllers\AdminSettingsController;
@@ -42,5 +43,8 @@ Route::middleware('auth')->group(function (): void {
         Route::get('/settings', [AdminSettingsController::class, 'edit'])->name('settings');
         Route::post('/settings', [AdminSettingsController::class, 'update'])->middleware('throttle:10,1')->name('settings.update');
         Route::post('/settings/binance-test', [AdminSettingsController::class, 'testBinance'])->middleware('throttle:5,10')->name('settings.binance-test');
+        Route::get('/ai', [AdminAiController::class, 'edit'])->name('ai');
+        Route::post('/ai', [AdminAiController::class, 'update'])->middleware('throttle:10,1')->name('ai.update');
+        Route::post('/ai/test', [AdminAiController::class, 'test'])->middleware('throttle:5,10')->name('ai.test');
     });
 });
