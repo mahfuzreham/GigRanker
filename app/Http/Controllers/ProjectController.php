@@ -5,17 +5,19 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Services\Seo\GigSeoGenerator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Throwable;
 
 class ProjectController extends Controller
 {
     public function index(): View
     {
         return view('dashboard', [
-            'projects' => Auth::user()->projects()->latest()->get(),
+            'projects' => Auth::user()->projects()->withCount('pages')->latest()->get(),
         ]);
     }
 
@@ -50,5 +52,40 @@ class ProjectController extends Controller
         $project = Auth::user()->projects()->create($validated + ['status' => 'draft']);
 
         return redirect()->route('dashboard')->with('success', "Project '{$project->name}' was created.");
+    }
+
+    public function generate(Request $request, Project $project, GigSeoGenerator $generator): RedirectResponse
+    {
+        abort_unless($project->user_id === Auth::id(), 404);
+
+        $validated = $request->validate([
+            'page_count' => ['nullable', 'integer', 'min:1', 'max:20'],
+        ]);
+
+        try {
+            $project->update(['status' => 'generating']);
+            $pages = $generator->generate($project, (int) ($validated['page_count'] ?? 10));
+
+            if ($pages === []) {
+                $project->update(['status' => 'failed']);
+                return back()->withErrors(['generation' => 'The AI did not return any usable pages.']);
+            }
+
+            foreach ($pages as $page) {
+                $project->pages()->updateOrCreate(
+                    ['slug' => $page['slug']],
+                    $page + ['status' => 'draft'],
+                );
+            }
+
+            $project->update(['status' => 'generated']);
+
+            return back()->with('success', count($pages).' SEO pages generated successfully.');
+        } catch (Throwable $exception) {
+            report($exception);
+            $project->update(['status' => 'failed']);
+
+            return back()->withErrors(['generation' => 'Generation is temporarily unavailable. Please try again later.']);
+        }
     }
 }
