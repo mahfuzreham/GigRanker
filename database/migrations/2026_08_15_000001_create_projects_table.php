@@ -12,6 +12,7 @@ return new class extends Migration
     {
         Schema::create('projects', function (Blueprint $table): void {
             $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('name', 120);
             $table->string('gig_url', 2048);
             $table->string('gig_title', 255)->nullable();
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->string('github_url', 2048)->nullable();
             $table->string('status', 40)->default('draft')->index();
             $table->timestamps();
+            $table->index(['user_id', 'status']);
         });
     }
 
