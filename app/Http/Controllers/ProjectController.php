@@ -16,18 +16,22 @@ class ProjectController extends Controller
 {
     public function index(): View
     {
-        return view('dashboard', [
-            'projects' => Auth::user()->projects()->withCount('pages')->latest()->get(),
-        ]);
+        return view('dashboard', ['projects' => Auth::user()->projects()->withCount('pages')->latest()->get()]);
     }
 
     public function create(): View
     {
-        return view('projects.create');
+        return view('projects.create', [
+            'sellerCountries' => config('markets.seller_countries'),
+            'buyerMarkets' => config('markets.buyer_markets'),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $sellerCountries = array_keys((array) config('markets.seller_countries'));
+        $buyerMarkets = array_keys((array) config('markets.buyer_markets'));
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'gig_url' => ['required', 'url', 'max:2048'],
@@ -35,6 +39,9 @@ class ProjectController extends Controller
             'gig_title' => ['nullable', 'string', 'max:255'],
             'gig_description' => ['nullable', 'string', 'max:10000'],
             'service_category' => ['nullable', 'string', 'max:120'],
+            'seller_country' => ['required', 'string', 'in:'.implode(',', $sellerCountries)],
+            'target_markets' => ['required', 'array', 'min:1', 'max:10'],
+            'target_markets.*' => ['string', 'in:'.implode(',', $buyerMarkets)],
             'target_country' => ['nullable', 'string', 'max:120'],
             'target_city' => ['nullable', 'string', 'max:120'],
             'keywords' => ['nullable', 'string', 'max:2000'],
@@ -55,53 +62,34 @@ class ProjectController extends Controller
             }
         }
 
-        $validated['site_url'] = ! empty($validated['site_url'])
-            ? rtrim($validated['site_url'], '/')
-            : null;
-
+        $validated['site_url'] = ! empty($validated['site_url']) ? rtrim($validated['site_url'], '/') : null;
+        $validated['target_markets'] = array_values(array_unique($validated['target_markets']));
         $validated['keywords'] = collect(preg_split('/[,\n]+/', (string) ($validated['keywords'] ?? '')))
-            ->map(fn (string $keyword): string => trim($keyword))
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
+            ->map(fn (string $keyword): string => trim($keyword))->filter()->unique()->values()->all();
 
         $project = Auth::user()->projects()->create($validated + ['status' => 'draft']);
-
         return redirect()->route('dashboard')->with('success', "Project '{$project->name}' was created.");
     }
 
     public function generate(Request $request, Project $project, GigSeoGenerator $generator): RedirectResponse
     {
         abort_unless($project->user_id === Auth::id(), 404);
-
-        $validated = $request->validate([
-            'page_count' => ['nullable', 'integer', 'min:1', 'max:20'],
-        ]);
-
+        $validated = $request->validate(['page_count' => ['nullable', 'integer', 'min:1', 'max:20']]);
         try {
             $project->update(['status' => 'generating']);
             $pages = $generator->generate($project, (int) ($validated['page_count'] ?? 10));
-
             if ($pages === []) {
                 $project->update(['status' => 'failed']);
                 return back()->withErrors(['generation' => 'The AI did not return any usable pages.']);
             }
-
             foreach ($pages as $page) {
-                $project->pages()->updateOrCreate(
-                    ['slug' => $page['slug']],
-                    $page + ['status' => 'draft'],
-                );
+                $project->pages()->updateOrCreate(['slug' => $page['slug']], $page + ['status' => 'draft']);
             }
-
             $project->update(['status' => 'generated']);
-
             return back()->with('success', count($pages).' SEO pages generated successfully.');
         } catch (Throwable $exception) {
             report($exception);
             $project->update(['status' => 'failed']);
-
             return back()->withErrors(['generation' => 'Generation is temporarily unavailable. Please try again later.']);
         }
     }
