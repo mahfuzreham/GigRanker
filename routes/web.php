@@ -20,7 +20,6 @@ Route::middleware('guest')->group(function (): void {
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1')->name('register.store');
 });
 Route::get('/go/{project}', [WebsiteController::class, 'click'])->whereNumber('project')->middleware('throttle:30,1')->name('projects.click');
-
 Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [ProjectController::class, 'index'])->name('dashboard');
@@ -33,7 +32,6 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/projects/{project}/generate', [ProjectController::class, 'generate'])->middleware('throttle:3,10')->name('projects.generate');
     Route::get('/projects/{project}/preview', [WebsiteController::class, 'preview'])->name('projects.preview');
     Route::get('/projects/{project}/export', [WebsiteController::class, 'export'])->middleware('throttle:5,10')->name('projects.export');
-
     Route::prefix('admin')->name('admin.')->middleware('admin')->group(function (): void {
         Route::get('/', [AdminController::class, 'index'])->name('dashboard');
         Route::get('/payments', [AdminPaymentController::class, 'index'])->name('payments');
@@ -41,5 +39,6 @@ Route::middleware('auth')->group(function (): void {
         Route::post('/payments/{payment}/reject', [AdminPaymentController::class, 'reject'])->middleware('throttle:30,1')->name('payments.reject');
         Route::get('/settings', [AdminSettingsController::class, 'edit'])->name('settings');
         Route::post('/settings', [AdminSettingsController::class, 'update'])->middleware('throttle:10,1')->name('settings.update');
+        Route::post('/settings/binance-test', [AdminSettingsController::class, 'testBinance'])->middleware('throttle:5,10')->name('settings.binance-test');
     });
 });
