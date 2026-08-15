@@ -16,15 +16,16 @@
 </head>
 <body>
 <header><div class="wrap nav"><a class="brand" href="{{ route('home') }}">Gig<span>Ranker</span></a><nav>
+<a href="{{ route('updates') }}">✨ What's New</a>
 @auth
 <a href="{{ route('dashboard') }}">Dashboard</a><a href="{{ route('billing.plans') }}">Plans</a><a href="{{ route('projects.create') }}">New Project</a>
-@if(auth()->user()->is_admin)<a href="{{ route('admin.dashboard') }}">Admin</a><a href="{{ route('admin.settings') }}">Settings</a>@endif
+@if(auth()->user()->is_admin)<a href="{{ route('admin.dashboard') }}">Admin</a><a href="{{ route('admin.settings') }}">Settings</a><a href="{{ route('admin.feature-updates') }}">Updates Admin</a>@endif
 <form method="POST" action="{{ route('logout') }}">@csrf<button class="btn secondary" type="submit">Logout</button></form>
 @else
 <a href="{{ route('login') }}">Login</a><a class="btn" href="{{ route('register') }}">Get Started</a>
 @endauth
 </nav></div></header>
 <main><div class="wrap">@if(session('success'))<div class="alert">{{ session('success') }}</div>@endif @if($errors->any())<div class="alert error errors"><strong>Please fix the following:</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif @yield('content')</div></main>
-<footer><div class="wrap">GigRanker <span class="muted">— Built for freelancers worldwide. Reach buyers worldwide.</span></div></footer>
+<footer><div class="wrap">GigRanker <span class="muted">— Built for freelancers worldwide. Reach buyers worldwide.</span> · <a href="{{ route('updates') }}">What's New</a></div></footer>
 </body>
 </html>
