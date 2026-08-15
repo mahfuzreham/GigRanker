@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class ProjectController extends Controller
@@ -14,7 +15,7 @@ class ProjectController extends Controller
     public function index(): View
     {
         return view('dashboard', [
-            'projects' => Project::query()->latest()->get(),
+            'projects' => Auth::user()->projects()->latest()->get(),
         ]);
     }
 
@@ -46,7 +47,7 @@ class ProjectController extends Controller
             ->values()
             ->all();
 
-        $project = Project::create($validated + ['status' => 'draft']);
+        $project = Auth::user()->projects()->create($validated + ['status' => 'draft']);
 
         return redirect()->route('dashboard')->with('success', "Project '{$project->name}' was created.");
     }
