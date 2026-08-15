@@ -41,15 +41,14 @@ class WebsiteController extends Controller
     public function click(Request $request, Project $project)
     {
         $pageId = $request->integer('page');
-        $page = $pageId > 0
-            ? $project->pages()->whereKey($pageId)->first()
-            : null;
-
+        $page = $pageId > 0 ? $project->pages()->whereKey($pageId)->first() : null;
         $ip = $request->ip();
+        $referrerHost = strtolower((string) parse_url((string) $request->header('referer'), PHP_URL_HOST));
+
         $project->clicks()->create([
             'project_page_id' => $page?->id,
             'ip_hash' => $ip ? hash_hmac('sha256', $ip, (string) config('app.key')) : null,
-            'referrer' => mb_substr((string) $request->header('referer'), 0, 2048),
+            'referrer' => $referrerHost !== '' ? mb_substr($referrerHost, 0, 255) : null,
             'user_agent' => mb_substr((string) $request->userAgent(), 0, 512),
         ]);
 
