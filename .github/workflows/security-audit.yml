@@ -1,0 +1,66 @@
+name: Security Audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  secret-pattern-check:
+    name: Secret Pattern Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for common committed secret patterns
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RInE --exclude-dir=.git --exclude='.env.example' \
+            '(AKIA[0-9A-Z]{16}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{20,}|gh[pousr]_[A-Za-z0-9_]{20,})' .; then
+            echo 'Potential secret pattern found.'
+            exit 1
+          fi
+
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check PHP dependency metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f composer.lock ]; then
+            echo 'composer.lock found; dependency audit can be added when the Laravel application is initialized.'
+          else
+            echo 'No composer.lock yet. Project is still in scaffold stage.'
+          fi
+
+  configuration-check:
+    name: Secure Configuration Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify required safety files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f .gitignore
+          test -f .env.example
+          test -f SECURITY.md
+          if [ -f .env ]; then
+            echo '.env must never be committed.'
+            exit 1
+          fi
