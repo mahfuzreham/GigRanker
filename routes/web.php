@@ -20,4 +20,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/dashboard', [ProjectController::class, 'index'])->name('dashboard');
     Route::get('/projects/create', [ProjectController::class, 'create'])->name('projects.create');
     Route::post('/projects', [ProjectController::class, 'store'])->middleware('throttle:20,1')->name('projects.store');
+    Route::post('/projects/{project}/generate', [ProjectController::class, 'generate'])
+        ->middleware('throttle:3,10')
+        ->name('projects.generate');
 });
