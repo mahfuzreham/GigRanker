@@ -33,6 +33,7 @@ GigRanker is a Laravel SaaS for freelancers and agencies who want to build SEO-f
 - GitHub branch/commit update checking
 - cPanel deployment configuration on secure API port **2083**
 - Explicit Admin approval before production deployment
+- Persistent **Deployment History & Audit Log**
 
 ## AI provider setup
 
@@ -106,6 +107,20 @@ Configure from the Admin deployment screen:
 Sensitive cPanel/GitHub credentials are stored encrypted where the application stores them. Prefer a restricted cPanel API token/secret instead of an account password. Never commit credentials to Git.
 
 The current deployment center intentionally does **not** auto-deploy merely because GitHub has a new commit. Admin approval is required before production changes.
+
+### Deployment History & Audit Log
+
+Every deployment-center action is recorded in `deployment_logs` and shown in **Admin → Deployment / Update Center**. The latest 30 records are displayed with:
+
+- Admin/user who performed the action
+- Action (`settings_saved`, `github_check`, `cpanel_test`, `deploy`)
+- Success/failed status
+- Repository and branch
+- Git commit SHA and message when available
+- Timestamp and request IP address
+- Safe diagnostic details for failed actions
+
+Secrets such as cPanel credentials and GitHub tokens are never written to the audit log. Deployment failures are recorded as failed audit events so an administrator can review what happened before retrying.
 
 ## cPanel installation
 
@@ -264,7 +279,7 @@ For Binance, use minimum required permissions and keep withdrawals disabled unle
 
 ## Remaining release checklist
 
-- [ ] Deployment history persistence and audit log
+- [ ] Deployment history persistence and audit log — implemented; requires migration in deployment environment
 - [ ] One-click rollback with backup protection
 - [ ] Pre-deployment backup + restore test
 - [ ] Post-deployment health check
@@ -279,6 +294,10 @@ For Binance, use minimum required permissions and keep withdrawals disabled unle
 - [ ] Security audit
 - [ ] Queue/cron configuration
 - [ ] Final cPanel smoke test
+
+## Verification note
+
+This deployment-history change has been reviewed at source level after writing the migration, model, audit service, controller integration and Admin UI. A live Laravel migration/test run was not executed from this environment, so production verification still requires running `php artisan migrate --force` and the project's test suite in the target environment.
 
 ## Repository
 
