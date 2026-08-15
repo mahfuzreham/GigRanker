@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Services\Billing\PlanCatalog;
+use App\Services\Notifications\OrderNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,7 +30,7 @@ class PaymentController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, OrderNotificationService $notifications): RedirectResponse
     {
         $validated = $request->validate([
             'plan' => ['required', 'string', 'in:starter,pro,agency'],
@@ -49,7 +50,7 @@ class PaymentController extends Controller
             return back()->withErrors(['transaction_reference' => 'This transaction reference has already been submitted.']);
         }
 
-        Payment::create([
+        $payment = Payment::create([
             'user_id' => Auth::id(),
             'plan' => $validated['plan'],
             'method' => $validated['method'],
@@ -59,6 +60,8 @@ class PaymentController extends Controller
             'merchant_reference' => 'GR-'.strtoupper(Str::random(20)),
             'transaction_reference' => $validated['transaction_reference'],
         ]);
+
+        $notifications->paymentSubmitted($payment);
 
         return redirect()->route('billing.plans')->with('success', 'Payment submitted for verification. Your paid plan will activate only after the payment is verified.');
     }
