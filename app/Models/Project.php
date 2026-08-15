@@ -42,4 +42,9 @@ class Project extends Model
     {
         return $this->hasMany(ProjectPage::class);
     }
+
+    public function clicks(): HasMany
+    {
+        return $this->hasMany(ProjectClick::class);
+    }
 }
