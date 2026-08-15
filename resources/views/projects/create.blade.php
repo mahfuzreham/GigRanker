@@ -2,8 +2,11 @@
 
 @section('content')
 <div style="max-width:850px;margin:auto">
-    <h1>Create Marketing Project</h1>
-    <p class="muted">Add the information GigRanker will use to build your SEO marketing strategy and website.</p>
+    <div class="card" style="margin-bottom:18px;background:linear-gradient(135deg,#111b38,#17112d);border-color:#33446f">
+        <div style="font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#a5b4fc;font-weight:800">Gig marketing setup</div>
+        <h1 style="margin:7px 0">Create Marketing Project</h1>
+        <p class="muted" style="margin:0">Choose the market you want to target. GigRanker will use the selected country, currency and locale when preparing marketing content.</p>
+    </div>
 
     <form class="card" method="POST" action="{{ route('projects.store') }}">
         @csrf
@@ -16,7 +19,25 @@
 
         <label for="site_url">Your Marketing Website URL</label>
         <input id="site_url" type="url" name="site_url" value="{{ old('site_url') }}" maxlength="2048" placeholder="https://example.com">
-        <p class="muted">Optional now. Add the final domain before publishing so canonical URLs and sitemap.xml use your own website.</p>
+
+        <div class="grid">
+            <div>
+                <label for="target_country">Target Market *</label>
+                <select id="target_country" name="target_country" required>
+                    <option value="">Select a market</option>
+                    @foreach(config('markets.countries', []) as $code => $market)
+                        <option value="{{ $code }}" @selected(old('target_country') === $code)>
+                            {{ $market['name'] }} — {{ $market['currency'] }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label for="target_city">Target City (optional)</label>
+                <input id="target_city" name="target_city" value="{{ old('target_city') }}" maxlength="120" placeholder="New York / London / Dhaka">
+            </div>
+        </div>
+        <p class="muted" style="margin-top:7px">Markets: 🇺🇸 USA · 🇬🇧 UK · 🇪🇺 Europe · 🇧🇩 Bangladesh · 🇵🇰 Pakistan · 🇮🇳 India</p>
 
         <label for="gig_title">Gig Title</label>
         <input id="gig_title" name="gig_title" value="{{ old('gig_title') }}" maxlength="255" placeholder="I will manage your Linux VPS server">
@@ -26,17 +47,6 @@
 
         <label for="service_category">Service Category</label>
         <input id="service_category" name="service_category" value="{{ old('service_category') }}" maxlength="120" placeholder="Linux Server Administration">
-
-        <div class="grid">
-            <div>
-                <label for="target_country">Target Country</label>
-                <input id="target_country" name="target_country" value="{{ old('target_country') }}" maxlength="120" placeholder="United States">
-            </div>
-            <div>
-                <label for="target_city">Target City (optional)</label>
-                <input id="target_city" name="target_city" value="{{ old('target_city') }}" maxlength="120" placeholder="New York">
-            </div>
-        </div>
 
         <label for="keywords">Main Keywords</label>
         <textarea id="keywords" name="keywords" maxlength="2000" placeholder="cPanel support, Linux VPS, server administrator">{{ old('keywords') }}</textarea>
