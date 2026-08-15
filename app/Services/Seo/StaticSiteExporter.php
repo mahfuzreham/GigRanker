@@ -18,7 +18,7 @@ class StaticSiteExporter
             throw new RuntimeException('Generate SEO pages before exporting the website.');
         }
 
-        $baseUrl = rtrim((string) config('app.url'), '/');
+        $baseUrl = rtrim((string) ($project->site_url ?: config('app.url')), '/');
         $siteName = trim((string) ($project->brand_name ?: $project->gig_title ?: 'Gig Marketing Website'));
         $homeTitle = trim((string) ($project->gig_title ?: $siteName));
         $homeDescription = trim((string) ($pages->first()->meta_description ?: 'SEO-ready marketing website for a freelance service.'));
@@ -27,17 +27,7 @@ class StaticSiteExporter
         $files['index.html'] = $this->pageHtml($project, $siteName, $homeTitle, $homeDescription, $this->homeContent($project, $pages), $pages, true, $baseUrl);
 
         foreach ($pages as $page) {
-            $files[$page->slug.'.html'] = $this->pageHtml(
-                $project,
-                $siteName,
-                (string) $page->title,
-                (string) $page->meta_description,
-                (string) $page->content,
-                $pages,
-                false,
-                $baseUrl,
-                $page,
-            );
+            $files[$page->slug.'.html'] = $this->pageHtml($project, $siteName, (string) $page->title, (string) $page->meta_description, (string) $page->content, $pages, false, $baseUrl, $page);
         }
 
         $files['sitemap.xml'] = $this->sitemap($pages, $baseUrl);
@@ -69,14 +59,13 @@ class StaticSiteExporter
         $links = $pages->take(6)->map(fn (ProjectPage $page): string => "## {$page->title}\n\nLearn more on our {$page->title} guide.")->implode("\n\n");
 
         return ($intro !== '' ? $intro : 'Explore practical information about this freelance service and request the service through the gig link.')
-            . "\n\n## Explore Our Services\n\n"
-            . $links;
+            . "\n\n## Explore Our Services\n\n".$links;
     }
 
     private function pageHtml(Project $project, string $siteName, string $title, string $description, string $content, $pages, bool $home, string $baseUrl, ?ProjectPage $current = null): string
     {
         $canonical = $home ? $baseUrl.'/' : $baseUrl.'/'.$current->slug.'.html';
-        $cta = $baseUrl.'/go/'.$project->id.($current ? '?page='.$current->id : '');
+        $cta = rtrim((string) config('app.url'), '/').'/go/'.$project->id.($current ? '?page='.$current->id : '');
         $links = $pages->filter(fn (ProjectPage $page): bool => ! $current || $page->id !== $current->id)
             ->take(8)
             ->map(fn (ProjectPage $page): string => '<li><a href="'.$this->esc($page->slug.'.html').'">'.$this->esc($page->title).'</a></li>')
