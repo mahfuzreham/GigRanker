@@ -27,6 +27,7 @@ final class AdminDeploymentController extends Controller
             'secret_set' => AppSetting::getValue('cpanel_secret', null) !== null,
             'github_token_set' => AppSetting::getValue('github_token', null) !== null,
             'logs' => DeploymentLog::with('user')->latest()->limit(30)->get(),
+            'releases' => DeploymentLog::query()->where('action', 'deploy')->where('status', 'success')->whereNotNull('commit_sha')->latest()->limit(15)->get(),
         ]);
     }
 
@@ -80,6 +81,38 @@ final class AdminDeploymentController extends Controller
             report($e);
             $audit->record($request, 'deploy', 'failed', ['repository' => AppSetting::getValue('github_repo'), 'branch' => AppSetting::getValue('github_branch'), 'details' => $audit->exceptionDetails($e)]);
             return back()->withErrors(['deployment' => 'Deployment failed: '.$e->getMessage()]);
+        }
+    }
+
+    public function rollback(Request $request, CpanelDeploymentService $service, DeploymentAuditService $audit): RedirectResponse
+    {
+        $data = $request->validate([
+            'release_id' => ['required','integer','exists:deployment_logs,id'],
+            'confirmed' => ['accepted'],
+        ]);
+        $release = DeploymentLog::query()->whereKey($data['release_id'])->where('action', 'deploy')->where('status', 'success')->whereNotNull('commit_sha')->firstOrFail();
+
+        try {
+            $result = $service->rollbackToCommit((string) $release->commit_sha);
+            $audit->record($request, 'rollback', 'success', [
+                'repository' => AppSetting::getValue('github_repo'),
+                'branch' => AppSetting::getValue('github_branch'),
+                'commit_sha' => $result['rollback_sha'],
+                'commit_message' => 'Rollback to '.$release->commit_sha,
+                'target_commit_sha' => $release->commit_sha,
+                'target_release_id' => $release->id,
+            ]);
+            return back()->with('success', 'Rollback commit created and approved release deployed successfully.');
+        } catch (Throwable $e) {
+            report($e);
+            $audit->record($request, 'rollback', 'failed', [
+                'repository' => AppSetting::getValue('github_repo'),
+                'branch' => AppSetting::getValue('github_branch'),
+                'target_commit_sha' => $release->commit_sha,
+                'target_release_id' => $release->id,
+                'details' => $audit->exceptionDetails($e),
+            ]);
+            return back()->withErrors(['deployment' => 'Rollback failed: '.$e->getMessage()]);
         }
     }
 }
