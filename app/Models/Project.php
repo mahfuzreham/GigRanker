@@ -14,6 +14,7 @@ class Project extends Model
         'user_id',
         'name',
         'gig_url',
+        'site_url',
         'gig_title',
         'gig_description',
         'service_category',
