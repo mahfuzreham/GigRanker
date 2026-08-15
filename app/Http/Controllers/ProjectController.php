@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Services\Billing\CreditLedger;
 use App\Services\Seo\GigSeoGenerator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
+use RuntimeException;
 use Throwable;
 
 class ProjectController extends Controller
@@ -71,7 +74,7 @@ class ProjectController extends Controller
         return redirect()->route('dashboard')->with('success', "Project '{$project->name}' was created.");
     }
 
-    public function generate(Request $request, Project $project, GigSeoGenerator $generator): RedirectResponse
+    public function generate(Request $request, Project $project, GigSeoGenerator $generator, CreditLedger $ledger): RedirectResponse
     {
         abort_unless($project->user_id === Auth::id(), 404);
 
@@ -79,13 +82,24 @@ class ProjectController extends Controller
             'page_count' => ['nullable', 'integer', 'min:1', 'max:20'],
         ]);
 
+        $requestedPages = (int) ($validated['page_count'] ?? 10);
+        $reference = 'generation:'.$project->id.':'.Str::uuid();
+
+        try {
+            $ledger->reserve(Auth::user(), $requestedPages, 'SEO page generation', $reference);
+        } catch (RuntimeException) {
+            return back()->withErrors(['credits' => 'You need '.$requestedPages.' AI credits to generate '.$requestedPages.' pages. Please upgrade or add credits.']);
+        }
+
         try {
             $project->update(['status' => 'generating']);
-            $pages = $generator->generate($project, (int) ($validated['page_count'] ?? 10));
+            $pages = $generator->generate($project, $requestedPages);
 
             if ($pages === []) {
+                $ledger->refund(Auth::user(), $requestedPages, 'Failed SEO generation refund', $reference.':refund');
                 $project->update(['status' => 'failed']);
-                return back()->withErrors(['generation' => 'The AI did not return any usable pages.']);
+
+                return back()->withErrors(['generation' => 'The AI did not return any usable pages. Your credits were refunded.']);
             }
 
             foreach ($pages as $page) {
@@ -95,14 +109,21 @@ class ProjectController extends Controller
                 );
             }
 
+            $usedPages = min($requestedPages, count($pages));
+            $unusedCredits = $requestedPages - $usedPages;
+            if ($unusedCredits > 0) {
+                $ledger->refund(Auth::user(), $unusedCredits, 'Unused SEO generation credits', $reference.':unused');
+            }
+
             $project->update(['status' => 'generated']);
 
-            return back()->with('success', count($pages).' SEO pages generated successfully.');
+            return back()->with('success', count($pages).' SEO pages generated successfully. '.$usedPages.' AI credits used.');
         } catch (Throwable $exception) {
             report($exception);
+            $ledger->refund(Auth::user(), $requestedPages, 'Failed SEO generation refund', $reference.':refund');
             $project->update(['status' => 'failed']);
 
-            return back()->withErrors(['generation' => 'Generation is temporarily unavailable. Please try again later.']);
+            return back()->withErrors(['generation' => 'Generation is temporarily unavailable. Your credits were refunded.']);
         }
     }
 }
