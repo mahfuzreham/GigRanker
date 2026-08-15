@@ -6,31 +6,24 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'GigRanker' }}</title>
     <style>
-        :root{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark;}
-        *{box-sizing:border-box} body{margin:0;background:#07101f;color:#eef5ff;line-height:1.6}
-        a{color:#7dd3fc;text-decoration:none}.wrap{width:min(1100px,92%);margin:auto}
-        header{padding:18px 0;border-bottom:1px solid #20304a;background:#081221}.nav{display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{font-weight:800;font-size:21px}.brand span{color:#7dd3fc}
-        nav{display:flex;align-items:center;gap:12px;flex-wrap:wrap} nav form{display:inline}
-        main{padding:50px 0}.card{background:#0d1829;border:1px solid #223653;border-radius:16px;padding:24px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
-        .btn{display:inline-block;border:0;border-radius:10px;padding:12px 18px;background:#7dd3fc;color:#06101d;font-weight:800;cursor:pointer}.btn.secondary{background:#15253b;color:#dbeafe;border:1px solid #29415f}
-        label{display:block;font-weight:700;margin:15px 0 7px}input,textarea,select{width:100%;padding:12px;border:1px solid #2a3d59;border-radius:10px;background:#091526;color:#eef5ff}textarea{min-height:130px;resize:vertical}
-        .muted{color:#9eabc0}.alert{padding:12px 15px;border-radius:10px;background:#103126;border:1px solid #225d46;margin-bottom:20px}.error{background:#32141b;border-color:#73303c}.errors{color:#ffb4bd}
-        table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:12px;border-bottom:1px solid #20304a}th{color:#9eabc0;font-size:13px;text-transform:uppercase}
-        footer{padding:35px 0;color:#77869e;border-top:1px solid #1e304b;margin-top:40px}
+        :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark;--bg:#060b16;--muted:#94a3b8;--accent:#8b5cf6;--accent2:#22d3ee}
+        *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 15% -10%,#172554 0,transparent 35%),radial-gradient(circle at 90% 0,#164e63 0,transparent 30%),var(--bg);color:#f5f7fb;line-height:1.65}a{color:#a5b4fc;text-decoration:none}a:hover{color:#c4b5fd}.wrap{width:min(1120px,92%);margin:auto}
+        header{position:sticky;top:0;z-index:20;padding:15px 0;border-bottom:1px solid rgba(148,163,184,.12);background:rgba(6,11,22,.84);backdrop-filter:blur(18px)}.nav{display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{font-weight:900;font-size:22px;color:#fff}.brand span{background:linear-gradient(90deg,var(--accent2),#a78bfa);-webkit-background-clip:text;background-clip:text;color:transparent}nav{display:flex;align-items:center;gap:16px;flex-wrap:wrap}nav form{display:inline}
+        main{min-height:calc(100vh - 150px);padding:54px 0}.card{background:linear-gradient(145deg,rgba(16,27,47,.95),rgba(8,15,29,.95));border:1px solid rgba(100,116,139,.25);border-radius:20px;padding:26px;box-shadow:0 18px 50px rgba(0,0,0,.22)}.card:hover{border-color:rgba(139,92,246,.38)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:12px;padding:12px 19px;background:linear-gradient(135deg,var(--accent),#6366f1);color:#fff;font-weight:800;cursor:pointer;box-shadow:0 8px 25px rgba(99,102,241,.22);transition:.2s}.btn:hover{transform:translateY(-1px);color:#fff;filter:brightness(1.08)}.btn.secondary{background:#111d32;color:#dbeafe;border-color:#2b3d5b;box-shadow:none}
+        label{display:block;font-weight:750;margin:16px 0 7px}input,textarea,select{width:100%;padding:13px 14px;border:1px solid #293c5a;border-radius:12px;background:#07111f;color:#eef5ff;outline:none;transition:.2s}input:focus,textarea:focus,select:focus{border-color:#8b5cf6;box-shadow:0 0 0 3px rgba(139,92,246,.13)}textarea{min-height:130px;resize:vertical}.muted{color:var(--muted)}.alert{padding:13px 16px;border-radius:12px;background:rgba(16,185,129,.10);border:1px solid rgba(52,211,153,.28);margin-bottom:20px}.error{background:rgba(239,68,68,.10);border-color:rgba(248,113,113,.3)}.errors{color:#fecaca}.badge{display:inline-flex;padding:5px 10px;border-radius:999px;background:rgba(139,92,246,.13);border:1px solid rgba(139,92,246,.28);color:#c4b5fd;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+        table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:13px;border-bottom:1px solid rgba(148,163,184,.12)}th{color:#94a3b8;font-size:12px;text-transform:uppercase;letter-spacing:.08em}footer{padding:38px 0;color:#718096;border-top:1px solid rgba(148,163,184,.12);margin-top:50px}@media(max-width:700px){header{position:static}.nav{align-items:flex-start;flex-direction:column}nav{gap:10px}.card{padding:20px}main{padding:35px 0}}
     </style>
 </head>
 <body>
 <header><div class="wrap nav"><a class="brand" href="{{ route('home') }}">Gig<span>Ranker</span></a><nav>
 @auth
-<a href="{{ route('dashboard') }}">Dashboard</a>
-<a href="{{ route('projects.create') }}">New Project</a>
+<a href="{{ route('dashboard') }}">Dashboard</a><a href="{{ route('billing.plans') }}">Plans</a><a href="{{ route('projects.create') }}">New Project</a>
 <form method="POST" action="{{ route('logout') }}">@csrf<button class="btn secondary" type="submit">Logout</button></form>
 @else
-<a href="{{ route('login') }}">Login</a>
-<a class="btn" href="{{ route('register') }}">Get Started</a>
+<a href="{{ route('login') }}">Login</a><a class="btn" href="{{ route('register') }}">Get Started</a>
 @endauth
 </nav></div></header>
 <main><div class="wrap">@if(session('success'))<div class="alert">{{ session('success') }}</div>@endif @if($errors->any())<div class="alert error errors"><strong>Please fix the following:</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif @yield('content')</div></main>
-<footer><div class="wrap">GigRanker — AI-powered freelance gig SEO & marketing platform.</div></footer>
+<footer><div class="wrap">GigRanker <span class="muted">— AI-powered freelance gig SEO & marketing platform.</span></div></footer>
 </body>
 </html>
