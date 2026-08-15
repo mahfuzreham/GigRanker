@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminPaymentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
@@ -33,8 +34,9 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/projects/{project}/export', [WebsiteController::class, 'export'])->middleware('throttle:5,10')->name('projects.export');
 
     Route::prefix('admin')->name('admin.')->middleware('admin')->group(function (): void {
+        Route::get('/', [AdminController::class, 'index'])->name('dashboard');
         Route::get('/payments', [AdminPaymentController::class, 'index'])->name('payments');
-        Route::post('/payments/{payment}/verify', [AdminPaymentController::class, 'verify'])->name('payments.verify');
-        Route::post('/payments/{payment}/reject', [AdminPaymentController::class, 'reject'])->name('payments.reject');
+        Route::post('/payments/{payment}/verify', [AdminPaymentController::class, 'verify'])->middleware('throttle:30,1')->name('payments.verify');
+        Route::post('/payments/{payment}/reject', [AdminPaymentController::class, 'reject'])->middleware('throttle:30,1')->name('payments.reject');
     });
 });
