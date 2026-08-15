@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\AppSetting;
+use App\Models\DeploymentLog;
 use App\Services\Deployment\CpanelDeploymentService;
+use App\Services\Deployment\DeploymentAuditService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -24,11 +26,11 @@ final class AdminDeploymentController extends Controller
             'github_branch' => AppSetting::getValue('github_branch', 'main'),
             'secret_set' => AppSetting::getValue('cpanel_secret', null) !== null,
             'github_token_set' => AppSetting::getValue('github_token', null) !== null,
-            'latest' => null,
+            'logs' => DeploymentLog::with('user')->latest()->limit(30)->get(),
         ]);
     }
 
-    public function save(Request $request): RedirectResponse
+    public function save(Request $request, DeploymentAuditService $audit): RedirectResponse
     {
         $data = $request->validate([
             'host' => ['required','string','max:255'], 'port' => ['required','integer','in:2083'], 'user' => ['required','string','max:100'],
@@ -44,24 +46,40 @@ final class AdminDeploymentController extends Controller
         AppSetting::putValue('github_repo', trim($data['github_repo']));
         AppSetting::putValue('github_branch', trim($data['github_branch']));
         if ($data['github_token'] !== null && $data['github_token'] !== '') AppSetting::putValue('github_token', $data['github_token'], true);
+        $audit->record($request, 'settings_saved', 'success', ['repository' => trim($data['github_repo']), 'branch' => trim($data['github_branch'])]);
         return back()->with('success', 'Deployment settings saved securely.');
     }
 
-    public function check(CpanelDeploymentService $service): RedirectResponse
+    public function check(Request $request, CpanelDeploymentService $service, DeploymentAuditService $audit): RedirectResponse
     {
-        try { $latest = $service->latestGithubCommit(); return back()->with('update', $latest); }
-        catch (Throwable $e) { report($e); return back()->withErrors(['deployment' => 'Unable to check GitHub: '.$e->getMessage()]); }
+        try {
+            $latest = $service->latestGithubCommit();
+            $audit->record($request, 'github_check', 'success', ['repository' => AppSetting::getValue('github_repo'), 'branch' => AppSetting::getValue('github_branch'), 'commit_sha' => $latest['sha'], 'commit_message' => $latest['message']]);
+            return back()->with('update', $latest);
+        } catch (Throwable $e) {
+            report($e);
+            $audit->record($request, 'github_check', 'failed', ['repository' => AppSetting::getValue('github_repo'), 'branch' => AppSetting::getValue('github_branch'), 'details' => $audit->exceptionDetails($e)]);
+            return back()->withErrors(['deployment' => 'Unable to check GitHub: '.$e->getMessage()]);
+        }
     }
 
-    public function test(CpanelDeploymentService $service): RedirectResponse
+    public function test(Request $request, CpanelDeploymentService $service, DeploymentAuditService $audit): RedirectResponse
     {
-        try { $service->test(); return back()->with('success', 'cPanel connection and Git repository access are working.'); }
-        catch (Throwable $e) { report($e); return back()->withErrors(['deployment' => 'cPanel test failed: '.$e->getMessage()]); }
+        try { $service->test(); $audit->record($request, 'cpanel_test', 'success', ['repository' => AppSetting::getValue('github_repo'), 'branch' => AppSetting::getValue('github_branch')]); return back()->with('success', 'cPanel connection and Git repository access are working.'); }
+        catch (Throwable $e) { report($e); $audit->record($request, 'cpanel_test', 'failed', ['details' => $audit->exceptionDetails($e)]); return back()->withErrors(['deployment' => 'cPanel test failed: '.$e->getMessage()]); }
     }
 
-    public function approveDeploy(CpanelDeploymentService $service): RedirectResponse
+    public function approveDeploy(Request $request, CpanelDeploymentService $service, DeploymentAuditService $audit): RedirectResponse
     {
-        try { $service->deployApproved(); return back()->with('success', 'Approved update deployed to cPanel.'); }
-        catch (Throwable $e) { report($e); return back()->withErrors(['deployment' => 'Deployment failed: '.$e->getMessage()]); }
+        try {
+            $latest = $service->latestGithubCommit();
+            $service->deployApproved();
+            $audit->record($request, 'deploy', 'success', ['repository' => AppSetting::getValue('github_repo'), 'branch' => AppSetting::getValue('github_branch'), 'commit_sha' => $latest['sha'], 'commit_message' => $latest['message']]);
+            return back()->with('success', 'Approved update deployed to cPanel.');
+        } catch (Throwable $e) {
+            report($e);
+            $audit->record($request, 'deploy', 'failed', ['repository' => AppSetting::getValue('github_repo'), 'branch' => AppSetting::getValue('github_branch'), 'details' => $audit->exceptionDetails($e)]);
+            return back()->withErrors(['deployment' => 'Deployment failed: '.$e->getMessage()]);
+        }
     }
 }
