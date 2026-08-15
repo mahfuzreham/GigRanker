@@ -20,6 +20,7 @@ Route::middleware('guest')->group(function (): void {
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1')->name('register.store');
 });
 Route::get('/go/{project}', [WebsiteController::class, 'click'])->whereNumber('project')->middleware('throttle:30,1')->name('projects.click');
+Route::get('/payments/bkash/callback', [PaymentController::class, 'bkashCallback'])->middleware('throttle:30,1')->name('payments.bkash-callback');
 Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [ProjectController::class, 'index'])->name('dashboard');
@@ -27,6 +28,7 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/billing/select', [BillingController::class, 'select'])->middleware('throttle:10,1')->name('billing.select');
     Route::get('/billing/pay', [PaymentController::class, 'create'])->middleware('throttle:10,1')->name('payments.create');
     Route::post('/billing/payments', [PaymentController::class, 'store'])->middleware('throttle:5,10')->name('payments.store');
+    Route::post('/billing/bkash/start', [PaymentController::class, 'bkashStart'])->middleware('throttle:5,10')->name('payments.bkash-start');
     Route::get('/projects/create', [ProjectController::class, 'create'])->name('projects.create');
     Route::post('/projects', [ProjectController::class, 'store'])->middleware('throttle:20,1')->name('projects.store');
     Route::post('/projects/{project}/generate', [ProjectController::class, 'generate'])->middleware('throttle:3,10')->name('projects.generate');
