@@ -13,16 +13,9 @@ class User extends Authenticatable
 {
     use Notifiable;
 
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-    ];
+    protected $fillable = ['name', 'email', 'password'];
 
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    protected $hidden = ['password', 'remember_token'];
 
     protected function casts(): array
     {
@@ -30,31 +23,13 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'ai_credits' => 'integer',
+            'is_admin' => 'boolean',
         ];
     }
 
-    public function projects(): HasMany
-    {
-        return $this->hasMany(Project::class);
-    }
-
-    public function creditTransactions(): HasMany
-    {
-        return $this->hasMany(CreditTransaction::class);
-    }
-
-    public function subscriptions(): HasMany
-    {
-        return $this->hasMany(Subscription::class);
-    }
-
-    public function payments(): HasMany
-    {
-        return $this->hasMany(Payment::class);
-    }
-
-    public function activeSubscription(): HasOne
-    {
-        return $this->hasOne(Subscription::class)->where('status', 'active')->latestOfMany();
-    }
+    public function projects(): HasMany { return $this->hasMany(Project::class); }
+    public function creditTransactions(): HasMany { return $this->hasMany(CreditTransaction::class); }
+    public function subscriptions(): HasMany { return $this->hasMany(Subscription::class); }
+    public function payments(): HasMany { return $this->hasMany(Payment::class); }
+    public function activeSubscription(): HasOne { return $this->hasOne(Subscription::class)->where('status', 'active')->latestOfMany(); }
 }
