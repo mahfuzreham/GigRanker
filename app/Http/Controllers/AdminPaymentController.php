@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
+use App\Services\Billing\PlanCatalog;
 use App\Services\Payments\PaymentActivationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use Throwable;
 
 class AdminPaymentController extends Controller
 {
@@ -21,7 +23,14 @@ class AdminPaymentController extends Controller
     public function verify(Payment $payment, PaymentActivationService $activation): RedirectResponse
     {
         abort_if($payment->status !== 'pending', 422, 'Only pending payments can be verified.');
-        $activation->activate($payment);
+        abort_unless(($plan = PlanCatalog::get((string) $payment->plan)) !== null && $plan['price'] > 0, 422);
+
+        try {
+            $activation->activate($payment);
+        } catch (Throwable $e) {
+            report($e);
+            return back()->withErrors(['payment' => $e->getMessage()]);
+        }
 
         return back()->with('success', 'Payment verified and subscription activated.');
     }
