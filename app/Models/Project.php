@@ -14,6 +14,7 @@ class Project extends Model
         'user_id',
         'name',
         'gig_url',
+        'site_url',
         'gig_title',
         'gig_description',
         'service_category',
@@ -41,5 +42,10 @@ class Project extends Model
     public function pages(): HasMany
     {
         return $this->hasMany(ProjectPage::class);
+    }
+
+    public function clicks(): HasMany
+    {
+        return $this->hasMany(ProjectClick::class);
     }
 }

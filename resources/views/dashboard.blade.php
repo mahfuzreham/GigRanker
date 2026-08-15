@@ -13,7 +13,7 @@
     <a class="btn" href="{{ route('projects.create') }}">Create First Project</a>
 @else
     <table>
-        <thead><tr><th>Project</th><th>Gig</th><th>Target</th><th>Pages</th><th>Status</th><th>Action</th></tr></thead>
+        <thead><tr><th>Project</th><th>Gig</th><th>Target</th><th>Pages</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody>
         @foreach($projects as $project)
             <tr>
@@ -23,17 +23,23 @@
                 <td>{{ $project->pages_count }}</td>
                 <td>{{ ucfirst($project->status) }}</td>
                 <td>
-                    <form method="POST" action="{{ route('projects.generate', $project) }}">
-                        @csrf
-                        <input type="hidden" name="page_count" value="10">
-                        <button class="btn secondary" type="submit" {{ in_array($project->status, ['generating'], true) ? 'disabled' : '' }}>Generate SEO</button>
-                    </form>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <form method="POST" action="{{ route('projects.generate', $project) }}">
+                            @csrf
+                            <input type="hidden" name="page_count" value="10">
+                            <button class="btn secondary" type="submit" {{ in_array($project->status, ['generating'], true) ? 'disabled' : '' }}>Generate SEO</button>
+                        </form>
+                        @if($project->pages_count > 0)
+                            <a class="btn secondary" href="{{ route('projects.preview', $project) }}">Preview</a>
+                            <a class="btn secondary" href="{{ route('projects.export', $project) }}">ZIP</a>
+                        @endif
+                    </div>
                 </td>
             </tr>
         @endforeach
         </tbody>
     </table>
-    <p class="muted" style="margin-bottom:0">Generation is server-side. AI credentials are never exposed to the browser.</p>
+    <p class="muted" style="margin-bottom:0">Generation and export are server-side. AI credentials are never exposed to the browser.</p>
 @endif
 </div>
 @endsection
