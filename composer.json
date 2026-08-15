@@ -1,0 +1,61 @@
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "mahfuzreham/gigranker",
+    "type": "project",
+    "description": "GigRanker - AI-powered freelance gig SEO and marketing platform.",
+    "keywords": ["laravel", "seo", "freelance", "gig-marketing", "ai"],
+    "license": "proprietary",
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^12.0"
+    },
+    "require-dev": {
+        "fakerphp/faker": "^1.24",
+        "laravel/pint": "^1.24",
+        "laravel/sail": "^1.41",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^8.8",
+        "phpunit/phpunit": "^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "@php artisan package:discover --ansi"
+        ],
+        "dev": [
+            "Composer\\Config::disableProcessTimeout",
+            "php artisan serve"
+        ],
+        "test": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": []
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
