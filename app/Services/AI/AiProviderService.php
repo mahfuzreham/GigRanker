@@ -12,7 +12,7 @@ final class AiProviderService
 {
     public function generate(string $prompt, int $maxTokens = 1200): string
     {
-        $primary = AppSetting::getValue('ai_primary_provider', 'openai');
+        $primary = AppSetting::getValue('ai_primary_provider', 'openrouter');
         $fallbacks = array_filter(array_map('trim', explode(',', (string) AppSetting::getValue('ai_fallback_providers', ''))));
         foreach (array_unique(array_merge([$primary], $fallbacks)) as $provider) {
             try { return $this->request((string) $provider, $prompt, $maxTokens); }
@@ -40,7 +40,6 @@ final class AiProviderService
             return (string) data_get($response, 'content.0.text');
         }
 
-        // OpenAI-compatible providers, including OpenAI, Gemini-compatible gateways, and custom endpoints.
         $response = Http::timeout(30)->withToken($key)->post($base.'/chat/completions', ['model'=>$model,'messages'=>[['role'=>'user','content'=>$prompt]],'max_tokens'=>$maxTokens])->throw()->json();
         return (string) data_get($response, 'choices.0.message.content');
     }
@@ -51,6 +50,8 @@ final class AiProviderService
             'openai' => 'https://api.openai.com/v1',
             'anthropic' => 'https://api.anthropic.com/v1',
             'gemini' => 'https://generativelanguage.googleapis.com/v1beta/openai',
+            'openrouter' => 'https://openrouter.ai/api/v1',
+            'groq' => 'https://api.groq.com/openai/v1',
             default => 'https://api.openai.com/v1',
         };
     }
@@ -61,6 +62,8 @@ final class AiProviderService
             'openai' => 'gpt-5-mini',
             'anthropic' => 'claude-sonnet-4-5',
             'gemini' => 'gemini-2.5-flash',
+            'openrouter' => 'openrouter/free',
+            'groq' => 'llama-3.3-70b-versatile',
             default => 'default',
         };
     }
