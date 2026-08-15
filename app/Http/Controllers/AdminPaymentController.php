@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
-use App\Models\Subscription;
-use App\Services\Billing\PlanCatalog;
+use App\Services\Payments\PaymentActivationService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class AdminPaymentController extends Controller
@@ -20,34 +18,10 @@ class AdminPaymentController extends Controller
         ]);
     }
 
-    public function verify(Payment $payment): RedirectResponse
+    public function verify(Payment $payment, PaymentActivationService $activation): RedirectResponse
     {
         abort_if($payment->status !== 'pending', 422, 'Only pending payments can be verified.');
-
-        $plan = PlanCatalog::get($payment->plan);
-        abort_unless($plan !== null && $plan['price'] > 0, 422);
-
-        DB::transaction(function () use ($payment, $plan): void {
-            $payment->update([
-                'status' => 'verified',
-                'paid_at' => now(),
-                'verified_at' => now(),
-            ]);
-
-            Subscription::query()->where('user_id', $payment->user_id)->where('status', 'active')->update(['status' => 'expired']);
-
-            Subscription::create([
-                'user_id' => $payment->user_id,
-                'plan' => $payment->plan,
-                'status' => 'active',
-                'provider' => $payment->method,
-                'provider_reference' => $payment->merchant_reference,
-                'starts_at' => now(),
-                'ends_at' => now()->addMonth(),
-            ]);
-
-            $payment->user()->increment('ai_credits', (int) $plan['credits']);
-        });
+        $activation->activate($payment);
 
         return back()->with('success', 'Payment verified and subscription activated.');
     }
