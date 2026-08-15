@@ -1,0 +1,35 @@
+name: Deploy Production
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH to cPanel
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USER }}
+          key: ${{ secrets.CPANEL_SSH_KEY }}
+          port: ${{ secrets.CPANEL_SSH_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -e
+            cd /home/gigranker/public_html
+            git fetch origin main
+            git reset --hard origin/main
+            composer install --no-dev --prefer-dist --optimize-autoloader
+            php artisan migrate --force
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            chmod -R ug+rX storage bootstrap/cache
+            echo "GigRanker production deployment complete: $(git rev-parse --short HEAD)"

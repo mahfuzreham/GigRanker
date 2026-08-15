@@ -18,6 +18,17 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
+          extensions: mbstring, dom, curl, fileinfo, sqlite3, pdo_sqlite
+          coverage: none
+
+      - name: Prepare Laravel writable directories
+        run: mkdir -p bootstrap/cache storage/framework/cache storage/framework/sessions storage/framework/views
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Composer dependency audit
+        run: composer audit --no-interaction --format=plain
 
       - name: PHP syntax check
         shell: bash
@@ -31,7 +42,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if git grep -nE '(OPENAI_API_KEY|GEMINI_API_KEY|GROQ_API_KEY|BKASH_APP_SECRET|BKASH_PASSWORD|PRIVATE_KEY|BINANCE_SECRET)[[:space:]]*=[[:space:]]*[^$[:space:]]' -- ':!SECURITY.md' ':!.env.example'; then
+          if git grep -nE '(OPENAI_API_KEY|GEMINI_API_KEY|GROQ_API_KEY|BKASH_APP_SECRET|BKASH_PASSWORD|PRIVATE_KEY|BINANCE_SECRET|BEP20_PRIVATE_KEY)[[:space:]]*=[[:space:]]*[^$[:space:]]' -- ':!SECURITY.md' ':!.env.example'; then
             echo 'Potential hard-coded secret detected.'
             exit 1
           fi
