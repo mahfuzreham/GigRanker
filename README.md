@@ -29,6 +29,10 @@ GigRanker is a Laravel SaaS for freelancers and agencies who want to build SEO-f
 - AI credit usage and provider-cost accounting
 - Public **New Features & Updates** page
 - Admin feature-update publisher with **Free / Paid / By Request** labels
+- Admin **Deployment / Update Center**
+- GitHub branch/commit update checking
+- cPanel deployment configuration on secure API port **2083**
+- Explicit Admin approval before production deployment
 
 ## AI provider setup
 
@@ -62,9 +66,46 @@ Users can visit `/updates` to see new releases and feature announcements. Each a
 - **Paid** — requires the relevant paid plan/add-on
 - **By Request** — user can request access or a custom implementation
 
-Admins publish updates from **Admin → Feature Updates**. This is intentionally separate from the Git commit history: code can be updated through GitHub while the product owner controls the user-facing release announcement.
+Admins publish updates from **Admin → Feature Updates**. This is intentionally separate from Git commit history: code can be updated through GitHub while the product owner controls the user-facing release announcement.
 
-For future releases, add a feature announcement after the code is deployed so users can see what changed without exposing internal implementation details.
+## Admin Deployment / Update Center
+
+The production update flow is approval-based:
+
+```text
+GitHub new commit
+       ↓
+Admin → Deployment Center
+       ↓
+Check GitHub Update
+       ↓
+Review commit SHA/message
+       ↓
+Approve & Deploy
+       ↓
+cPanel UAPI over HTTPS :2083
+       ↓
+VersionControl update
+       ↓
+VersionControlDeployment
+       ↓
+Production
+```
+
+Configure from the Admin deployment screen:
+
+- cPanel host/IP
+- cPanel API port (**2083 only**)
+- cPanel username
+- cPanel API secret/token (preferred)
+- repository root
+- GitHub repository
+- GitHub branch
+- GitHub token for private repository access
+
+Sensitive cPanel/GitHub credentials are stored encrypted where the application stores them. Prefer a restricted cPanel API token/secret instead of an account password. Never commit credentials to Git.
+
+The current deployment center intentionally does **not** auto-deploy merely because GitHub has a new commit. Admin approval is required before production changes.
 
 ## cPanel installation
 
@@ -78,29 +119,29 @@ Repository: mahfuzreham/GigRanker
 
 ### 1. Open cPanel Terminal / SSH
 
-Log in as the `gigranker` cPanel account (or use the account's SSH access) and enter:
-
-```bash
-cd /home/gigranker
-```
+Log in as the `gigranker` cPanel account (or use the account's SSH access) and enter the deployment directory.
 
 ### 2. Clone the private repository
 
 If the repository is private, use a GitHub deploy key, SSH key or an authenticated Git method. Do **not** put a personal access token directly into shell history.
 
 ```bash
+cd /home/gigranker
+mkdir -p app
 git clone git@github.com:mahfuzreham/GigRanker.git app
 cd /home/gigranker/app
 ```
 
-If the repository is already present:
+For an existing checkout:
 
 ```bash
 cd /home/gigranker/app
+git fetch origin
+git checkout feature/admin-payment-verification
 git pull --ff-only origin feature/admin-payment-verification
 ```
 
-Use your actual production branch when you promote the project to `main`.
+Use the actual production branch when promoting the project to `main`.
 
 ### 3. Point the cPanel domain to Laravel `public`
 
@@ -110,17 +151,15 @@ Recommended document root:
 /home/gigranker/app/public
 ```
 
-If your cPanel domain is already fixed to `/home/gigranker/public_html`, use a deployment layout that keeps the Laravel `public` directory as the web-facing directory. Never expose the Laravel project root, `.env`, storage internals or Git metadata to the browser.
+If the cPanel domain must remain `/home/gigranker/public_html`, use a deployment layout that keeps Laravel's `public` directory as the web-facing directory. Never expose the Laravel project root, `.env`, storage internals or Git metadata to the browser.
 
 ### 4. Install PHP dependencies
-
-From the Laravel project directory:
 
 ```bash
 composer install --no-dev --optimize-autoloader
 ```
 
-Use the PHP/Composer version supported by the application's `composer.json`.
+Use the PHP/Composer version supported by `composer.json`.
 
 ### 5. Configure environment
 
@@ -129,19 +168,7 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Set production values in `.env` for:
-
-```text
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=https://gigranker.cheap
-DB_CONNECTION=mysql
-DB_DATABASE=...
-DB_USERNAME=...
-DB_PASSWORD=...
-```
-
-Configure mail, bKash, BEP20/BSC, Binance, Discord, Telegram and any AI provider credentials only through secure server configuration/Admin Settings as appropriate. Never commit `.env`.
+Set production values in `.env` and keep `APP_DEBUG=false`.
 
 ### 6. Run migrations and optimize
 
@@ -153,11 +180,11 @@ php artisan route:cache
 php artisan view:cache
 ```
 
-If queues are used for your production workload, configure a cPanel Supervisor/daemon equivalent or the hosting provider's supported queue process.
+Configure queue workers/cron using the hosting provider's supported process manager.
 
 ### 7. Permissions
 
-The web/PHP process needs write access to Laravel's runtime directories, especially:
+The PHP/web process needs write access to:
 
 ```text
 storage/
@@ -166,15 +193,14 @@ bootstrap/cache/
 
 Do not make the entire project world-writable.
 
-### 8. Updating after new GitHub code
+## Manual production update
 
-Before updating production, back up the database and confirm the target commit/branch.
+Always back up the database and verify the target commit before a production update.
 
 ```bash
 cd /home/gigranker/app
 git fetch origin
-git status
-git pull --ff-only origin feature/admin-payment-verification
+git pull --ff-only origin main
 composer install --no-dev --optimize-autoloader
 php artisan migrate --force
 php artisan optimize:clear
@@ -183,30 +209,28 @@ php artisan route:cache
 php artisan view:cache
 ```
 
-If a future release changes frontend assets, also run the project's documented build command before cache generation.
+Do not run `git reset --hard` on production unless the rollback procedure has been reviewed and the database/configuration impact is understood.
 
-**Do not run `git reset --hard` on production unless you intentionally understand and accept the data/configuration impact.**
+## Customer release workflow
 
-### Recommended release workflow
+Code deployment and customer announcements are separate on purpose. Internal bug fixes/security patches should not automatically appear as commercial features.
 
 ```text
-Local development
-      ↓
-Private GitHub branch / PR
-      ↓
-CI + tests + security review
-      ↓
-Merge/release
-      ↓
-Production git pull --ff-only
-      ↓
-composer install + migrations
-      ↓
-clear/cache Laravel
-      ↓
-Smoke test
-      ↓
-Publish user-facing Feature Update
+New code/feature
+    ↓
+CI + review
+    ↓
+Admin approves deployment
+    ↓
+Production deploy + smoke test
+    ↓
+Admin → Feature Updates
+    ↓
+Free / Paid / By Request
+    ↓
+Publish
+    ↓
+Users see What's New
 ```
 
 ## Production secrets
@@ -214,7 +238,7 @@ Publish user-facing Feature Update
 Never commit:
 
 - `.env`
-- OpenAI/Anthropic/Gemini/OpenRouter/Groq keys
+- AI provider keys
 - bKash secrets
 - Binance API secrets
 - Telegram bot tokens
@@ -222,9 +246,7 @@ Never commit:
 - database passwords
 - wallet private keys
 
-For Binance, use the minimum required permissions and **do not enable withdrawals** unless a future feature explicitly requires it and has been separately security-reviewed.
-
-For BEP20 payments, only configure a receiving address. Never store a wallet private key in GigRanker.
+For Binance, use minimum required permissions and keep withdrawals disabled unless separately reviewed. For BEP20 payments, configure only the receiving address; never store a wallet private key in GigRanker.
 
 ## Security principles
 
@@ -240,9 +262,23 @@ For BEP20 payments, only configure a receiving address. Never store a wallet pri
 - Run tests and security checks before releases.
 - Back up the database before migrations or production updates.
 
-## Plans
+## Remaining release checklist
 
-The application currently includes Free, Starter, Pro and Agency concepts with plan-specific credits/project/page limits. Final pricing and entitlements should be verified in the application's plan configuration before production launch.
+- [ ] Deployment history persistence and audit log
+- [ ] One-click rollback with backup protection
+- [ ] Pre-deployment backup + restore test
+- [ ] Post-deployment health check
+- [ ] Discord/Telegram deployment notifications
+- [ ] Full AI credit/token accounting validation
+- [ ] Free/Paid/By Request entitlement enforcement tests
+- [ ] bKash production credential test
+- [ ] BEP20 production test
+- [ ] Binance API production connection test
+- [ ] Payment edge-case tests
+- [ ] Full automated test suite
+- [ ] Security audit
+- [ ] Queue/cron configuration
+- [ ] Final cPanel smoke test
 
 ## Repository
 
