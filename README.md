@@ -115,10 +115,26 @@ A full repository validation pass was performed after the deployment-readiness w
 - Authentication, guest-access and session lifecycle flows are covered by feature tests.
 - The complete project flow is covered from project creation through AI generation, preview, ZIP export and outbound Fiverr click tracking.
 - Cross-user access to project generation, preview and export is explicitly tested.
+- Subscription plan architecture was rebuilt on top of the current `main` code instead of merging the stale conflicting branch.
+- Billing plans are validated server-side and paid plans remain inactive until a verified payment flow is implemented.
+- Subscription records, user plan state, authenticated billing routes and billing plan UI are covered by feature tests.
 
 AI provider resilience is covered by automated tests for retrying rate-limit and temporary-server responses. The end-to-end project flow uses a fake AI provider in tests, so CI never requires real AI credentials.
 
 The latest quality workflow is required to pass on **PHP 8.2 and PHP 8.3**, including Composer validation, dependency auditing, PHP syntax checks, Laravel boot/route checks, Artisan command discovery and application tests.
+
+## Billing / subscription plans
+
+The current subscription foundation provides four plans:
+
+| Plan | Price | AI credits | Projects | SEO pages |
+|---|---:|---:|---:|---:|
+| Free | $0 | 10 | 1 | 3 |
+| Starter | $5/month | 50 | 3 | 20 |
+| Pro | $15/month | 200 | 10 | 100 |
+| Agency | $39/month | 500 | 50 | 500 |
+
+Authenticated users can view plans at `/billing/plans`. Selecting **Free** updates the user's plan. Paid selections intentionally do **not** activate a subscription or grant credits yet; payment verification must be implemented first so an untrusted browser request cannot unlock a paid plan.
 
 ## Security principles
 
@@ -131,6 +147,7 @@ The latest quality workflow is required to pass on **PHP 8.2 and PHP 8.3**, incl
 - Sanitize generated HTML before preview/export where applicable.
 - Normalize authentication identifiers before lookup.
 - Regenerate the session after authentication and invalidate it on logout.
+- Never activate a paid subscription from a client-side payment claim alone.
 - Keep dependencies updated and run security checks before production releases.
 
 ## Deployment target
@@ -213,4 +230,4 @@ The server must also have a working Laravel mail configuration for alert deliver
 
 ## Status
 
-Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, security auditing, isolated feature testing and the complete project user-flow testing are implemented. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
+Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, security auditing, isolated feature testing, complete project-flow testing and the subscription foundation are implemented. Paid payment activation remains intentionally pending verified bKash/BEP20 integration. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
