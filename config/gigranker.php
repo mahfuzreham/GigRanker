@@ -29,4 +29,9 @@ return [
         'blog' => (int) env('CREDITS_BLOG', 3),
         'regenerate' => (int) env('CREDITS_REGENERATE', 2),
     ],
+    'payments' => [
+        'bkash_number' => env('BKASH_NUMBER'),
+        'bep20_address' => env('BEP20_USDT_ADDRESS'),
+        'bep20_network' => env('BEP20_NETWORK', 'BSC'),
+    ],
 ];

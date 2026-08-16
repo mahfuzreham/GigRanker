@@ -118,6 +118,10 @@ A full repository validation pass was performed after the deployment-readiness w
 - Subscription plan architecture was rebuilt on top of the current `main` code instead of merging the stale conflicting branch.
 - Billing plans are validated server-side and paid plans remain inactive until a verified payment flow is implemented.
 - Subscription records, user plan state, authenticated billing routes and billing plan UI are covered by feature tests.
+- Paid checkout now creates a server-side pending payment ledger entry for bKash or BEP20 submissions.
+- Payment transaction references are protected against duplicate reuse.
+- Payment destinations are configured through server-side environment variables and are never accepted from the browser.
+- Payment intake tests verify that submitted payments remain pending and cannot activate a paid plan by themselves.
 
 AI provider resilience is covered by automated tests for retrying rate-limit and temporary-server responses. The end-to-end project flow uses a fake AI provider in tests, so CI never requires real AI credentials.
 
@@ -134,7 +138,19 @@ The current subscription foundation provides four plans:
 | Pro | $15/month | 200 | 10 | 100 |
 | Agency | $39/month | 500 | 50 | 500 |
 
-Authenticated users can view plans at `/billing/plans`. Selecting **Free** updates the user's plan. Paid selections intentionally do **not** activate a subscription or grant credits yet; payment verification must be implemented first so an untrusted browser request cannot unlock a paid plan.
+Authenticated users can view plans at `/billing/plans`. Selecting **Free** updates the user's plan. Paid selections now open `/billing/payment`, where users select bKash or BEP20 and submit a transaction ID/TXID. The submission is stored as `pending`; it does not activate the paid plan until a trusted verification workflow approves it.
+
+### Payment configuration
+
+Set these values only in the production `.env` file:
+
+```env
+BKASH_NUMBER=your-bkash-number
+BEP20_USDT_ADDRESS=your-bep20-usdt-address
+BEP20_NETWORK=BSC
+```
+
+Never commit real payment numbers, wallet addresses, API keys or provider credentials to Git.
 
 ## Security principles
 
@@ -143,6 +159,7 @@ Authenticated users can view plans at `/billing/plans`. Selecting **Free** updat
 - Payment secrets stay server-side.
 - Validate and authorize every project/resource request.
 - Rate-limit generation and authentication endpoints.
+- Rate-limit payment submission endpoints.
 - Treat AI output as untrusted data.
 - Sanitize generated HTML before preview/export where applicable.
 - Normalize authentication identifiers before lookup.
@@ -230,4 +247,4 @@ The server must also have a working Laravel mail configuration for alert deliver
 
 ## Status
 
-Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, security auditing, isolated feature testing, complete project-flow testing and the subscription foundation are implemented. Paid payment activation remains intentionally pending verified bKash/BEP20 integration. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
+Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, security auditing, isolated feature testing, complete project-flow testing, the subscription foundation and secure payment intake are implemented. Paid subscription activation remains pending the admin/provider verification workflow. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
