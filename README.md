@@ -84,7 +84,7 @@ Do not mark the server ready until `composer check-platform-reqs` passes and `Zi
 
 ## Automated code quality / syntax checks
 
-Every push and pull request runs the GitHub Actions quality workflow against **PHP 8.2 and PHP 8.3**. It validates Composer configuration, installs dependencies, audits locked Composer dependencies, runs `php -l` against every tracked PHP source file, boots Laravel, checks routes and verifies the deployment/rollback/backup/health Artisan commands. Application tests run against an isolated SQLite in-memory database.
+Every push and pull request runs the GitHub Actions quality workflow against **PHP 8.2 and PHP 8.3**. It validates Composer configuration, installs dependencies, audits locked Composer dependencies, runs `php -l` against every tracked PHP source file, boots Laravel, checks routes and verifies the deployment/rollback/backup/health Artisan commands. It also executes `gigranker:health --json` in CI and runs application tests against an isolated SQLite in-memory database.
 
 The security workflow separately checks PHP syntax and scans tracked files for common hard-coded secret assignments. A production release should not proceed while either workflow is failing.
 
@@ -127,10 +127,11 @@ A full repository validation pass was performed after the deployment-readiness w
 - Approved payments activate the selected paid subscription, add the plan's AI credits and record the credit transaction atomically.
 - Rejected payments remain inactive and retain a reviewer audit reference.
 - Payment review tests cover non-admin denial, approval, rejection and repeated-approval idempotency.
+- The production health command is executed directly in the PHP 8.2/8.3 quality matrix so command registration and runtime health-check wiring are continuously validated.
 
 AI provider resilience is covered by automated tests for retrying rate-limit and temporary-server responses. The end-to-end project flow uses a fake AI provider in tests, so CI never requires real AI credentials.
 
-The latest quality workflow is required to pass on **PHP 8.2 and PHP 8.3**, including Composer validation, dependency auditing, PHP syntax checks, Laravel boot/route checks, Artisan command discovery and application tests.
+The latest quality workflow is required to pass on **PHP 8.2 and PHP 8.3**, including Composer validation, dependency auditing, PHP syntax checks, Laravel boot/route checks, Artisan command discovery, the production health command and application tests.
 
 ## Billing / subscription plans
 
@@ -272,4 +273,4 @@ The server must also have a working Laravel mail configuration for alert deliver
 
 ## Status
 
-Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, security auditing, isolated feature testing, complete project-flow testing, the subscription foundation, secure payment intake and admin payment verification are implemented. Payment verification remains a manual trust step; automatic bKash/provider or on-chain verification is not claimed. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
+Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, security auditing, isolated feature testing, complete project-flow testing, the subscription foundation, secure payment intake and admin payment verification are implemented. The quality workflow now executes the production health command on PHP 8.2 and PHP 8.3. Payment verification remains a manual trust step; automatic bKash/provider or on-chain verification is not claimed. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
