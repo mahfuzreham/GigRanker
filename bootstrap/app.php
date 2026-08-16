@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Console\Commands\DeploymentBackupCommand;
 use App\Console\Commands\DeploymentLogCommand;
+use App\Console\Commands\DeploymentRollbackCommand;
+use App\Console\Commands\ProductionHealthCommand;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -16,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([
         DeploymentLogCommand::class,
+        DeploymentRollbackCommand::class,
+        DeploymentBackupCommand::class,
+        ProductionHealthCommand::class,
     ])
     ->withSchedule(function (Schedule $schedule): void {
         // Run on the 1st and 16th of each month at 03:00. This provides a
