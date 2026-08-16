@@ -20,12 +20,67 @@ GigRanker is a planned Laravel SaaS platform for creating SEO-focused marketing 
 
 ## Planned stack
 
-- Laravel / PHP
+- Laravel 12 / PHP 8.2+
 - MySQL or MariaDB
 - Blade + Tailwind CSS
 - Queue workers for AI generation
 - Server-side AI provider abstraction
 - cPanel production deployment
+
+## PHP / cPanel server requirements
+
+GigRanker declares **PHP 8.2 or newer** in `composer.json`. For cPanel PHP Selector, **PHP 8.3.x is the recommended production choice** after verifying the host's Laravel/extension package availability. Keep the production PHP version aligned with the version validated by `composer install` and the application's CI/runtime checks.
+
+### PHP Selector checklist
+
+- [ ] PHP 8.2+ available
+- [ ] PHP 8.3.x selected/recommended for production
+- [ ] PHP-FPM enabled where available
+- [ ] Composer 2.x installed and working
+- [ ] MySQL/MariaDB database configured
+- [ ] Document root points to the Laravel `public/` directory or the cPanel deployment layout is configured correctly
+
+### Required PHP extensions
+
+Enable these extensions in cPanel PHP Selector / MultiPHP Manager:
+
+- [ ] `bcmath`
+- [ ] `ctype`
+- [ ] `curl`
+- [ ] `dom`
+- [ ] `fileinfo`
+- [ ] `filter`
+- [ ] `hash`
+- [ ] `mbstring`
+- [ ] `openssl`
+- [ ] `pcre`
+- [ ] `pdo`
+- [ ] `pdo_mysql`
+- [ ] `session`
+- [ ] `tokenizer`
+- [ ] `xml`
+- [ ] `zip` — required for GigRanker ZIP/static-site export (`ZipArchive`)
+
+### Recommended production extensions / features
+
+- [ ] `intl`
+- [ ] `opcache`
+- [ ] `redis` — optional, useful when Redis is selected for cache/queues
+
+### Verify PHP environment
+
+Run these commands on the production server after selecting the PHP version:
+
+```bash
+php -v
+php -m | sort
+php -r 'echo class_exists("ZipArchive") ? "ZipArchive: OK\n" : "ZipArchive: MISSING\n";'
+php -r 'echo extension_loaded("pdo_mysql") ? "pdo_mysql: OK\n" : "pdo_mysql: MISSING\n";'
+composer --version
+composer check-platform-reqs
+```
+
+Do not mark the server ready until `composer check-platform-reqs` passes and `ZipArchive` is available for the export feature.
 
 ## Security principles
 
@@ -118,4 +173,4 @@ The server must also have a working Laravel mail configuration for alert deliver
 
 ## Status
 
-Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, and the recurring health-check schedule are implemented. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
+Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, and the PHP/cPanel deployment checklist are documented. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
