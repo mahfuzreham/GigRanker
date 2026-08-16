@@ -105,6 +105,11 @@ A full repository validation pass was performed after the deployment-readiness w
 - AI-generated duplicate page slugs are ignored so one generated page cannot silently overwrite another.
 - AI request JSON encoding is checked explicitly before sending the provider request.
 - Gemini and OpenAI-compatible providers now retry transient `408`, `429`, `500`, `502`, `503`, and `504` failures, while still failing fast on non-transient HTTP errors.
+- Static export now rejects unsafe/path-traversal page slugs before creating ZIP entries.
+- Export site URLs are restricted to HTTP/HTTPS and checked again at runtime.
+- ZIP entry names are validated before being written.
+- Exported HTML escapes AI/user content, and JSON-LD encoding now fails safely instead of producing invalid markup.
+- Export tests cover path traversal, HTML injection and invalid site URL handling.
 
 AI provider resilience is covered by automated tests for retrying rate-limit and temporary-server responses.
 
