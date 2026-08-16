@@ -93,10 +93,29 @@ Run the production readiness check before and after deployments:
 ```bash
 php artisan gigranker:health
 php artisan gigranker:health --json
+php artisan gigranker:health --json --notify-admin
 ```
 
-The check verifies production-safe application configuration, database connectivity, cache read/write, local storage read/write and required core configuration. A failed check exits non-zero so deployment automation can stop safely.
+The check verifies production-safe application configuration, database connectivity, cache read/write, local storage read/write and required core configuration. A failed check exits non-zero. With `--notify-admin`, failures are emailed to `ADMIN_EMAIL`.
+
+### Automatic 15-day check
+
+Production health checks are scheduled for **03:00 on the 1st and 16th of every month** (roughly a 15-day cadence). The scheduler runs `gigranker:health --json --notify-admin` and prevents overlapping runs.
+
+On cPanel, the Laravel scheduler still needs the standard cron entry:
+
+```cron
+* * * * * cd /home/gigranker/public_html && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Set the production `.env` value:
+
+```env
+ADMIN_EMAIL=your-admin@example.com
+```
+
+The server must also have a working Laravel mail configuration for alert delivery.
 
 ## Status
 
-Deployment history/logging, safe rollback, pre-deployment database backups, and production health checks are implemented. The scheduled deployment-readiness implementation is complete; production should still be validated on the actual cPanel server with real environment credentials before public launch.
+Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, and the recurring health-check schedule are implemented. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
