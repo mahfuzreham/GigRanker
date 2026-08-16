@@ -23,7 +23,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: mbstring, dom, fileinfo, openssl, pdo, pdo_mysql, tokenizer, xml, ctype, curl, zip
+          extensions: mbstring, dom, fileinfo, openssl, pdo, pdo_mysql, pdo_sqlite, sqlite3, tokenizer, xml, ctype, curl, zip
           coverage: none
 
       - name: Validate Composer configuration
@@ -31,6 +31,9 @@ jobs:
 
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Audit Composer dependencies
+        run: composer audit --no-interaction --locked
 
       - name: Check every PHP file for syntax errors
         shell: bash
@@ -42,6 +45,9 @@ jobs:
             -not -path './vendor/*' \
             -not -path './storage/*' \
             -not -path './bootstrap/cache/*' -print0)
+
+      - name: Check code style
+        run: vendor/bin/pint --test
 
       - name: Boot Laravel and list routes
         run: |
