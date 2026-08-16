@@ -87,7 +87,10 @@ class AdminPaymentVerificationTest extends TestCase
         $this->actingAs($admin)->post(route('admin.payments.approve', $payment))->assertRedirect();
         $this->assertSame(60, $customer->fresh()->ai_credits);
 
-        $this->actingAs($admin)->post(route('admin.payments.approve', $payment))->assertStatus(500);
+        $this->actingAs($admin)
+            ->post(route('admin.payments.approve', $payment))
+            ->assertSessionHasErrors('payment');
+
         $this->assertSame(60, $customer->fresh()->ai_credits);
         $this->assertDatabaseCount('credit_transactions', 1);
         $this->assertDatabaseCount('subscriptions', 1);
