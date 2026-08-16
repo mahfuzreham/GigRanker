@@ -1,10 +1,17 @@
 # GigRanker
 
+**Version: 1.0**  
+**Status: Production Candidate — Live testing by administrator**
+
 **Turn Your Freelance Gig Into an SEO Marketing Website.**
 
 ## 🚀 cPanel Terminal — Deploy / Update from GitHub
 
 Use the following commands in **cPanel Terminal** to download the complete GigRanker code from GitHub and deploy/update the application. Repository: `mahfuzreham/GigRanker`.
+
+### Version 1 deployment
+
+This README currently documents **GigRanker v1.0**. Keep the production deployment on the `main` branch for the v1 line unless a newer version is explicitly released.
 
 ### First deployment — empty `public_html`
 
@@ -428,4 +435,4 @@ The server must also have a working Laravel mail configuration for alert deliver
 
 ## Status
 
-Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, security auditing, isolated feature testing, complete project-flow testing, the subscription foundation, secure payment intake and admin payment verification are implemented. The quality workflow now executes the production health command on PHP 8.2 and PHP 8.3. Payment verification remains a manual trust step; automatic bKash/provider or on-chain verification is not claimed. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
+**GigRanker v1.0** includes deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, security auditing, isolated feature testing, complete project-flow testing, the subscription foundation, secure payment intake and admin payment verification. The quality workflow executes the production health command on PHP 8.2 and PHP 8.3. Payment verification remains a manual trust step; automatic bKash/provider or on-chain verification is not claimed. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
