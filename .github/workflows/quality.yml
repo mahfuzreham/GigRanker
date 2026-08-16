@@ -60,5 +60,8 @@ jobs:
           php artisan list --format=txt | grep -F 'gigranker:backup'
           php artisan list --format=txt | grep -F 'gigranker:health'
 
+      - name: Execute production health command in CI
+        run: php artisan gigranker:health --json
+
       - name: Run application tests
         run: php artisan test --without-tty
