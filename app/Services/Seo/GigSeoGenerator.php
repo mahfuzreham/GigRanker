@@ -46,7 +46,11 @@ PROMPT;
             ],
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
-        $raw = $this->ai->driver()->generate($system, (string) $user);
+        if ($user === false) {
+            throw new RuntimeException('Unable to encode the SEO generation request.');
+        }
+
+        $raw = $this->ai->driver()->generate($system, $user);
         $decoded = json_decode($this->stripCodeFence($raw), true);
 
         if (! is_array($decoded) || ! isset($decoded['pages']) || ! is_array($decoded['pages'])) {
@@ -54,6 +58,7 @@ PROMPT;
         }
 
         $pages = [];
+        $usedSlugs = [];
         foreach ($decoded['pages'] as $page) {
             if (! is_array($page)) {
                 continue;
@@ -65,16 +70,19 @@ PROMPT;
                 continue;
             }
 
-            $slug = Str::slug((string) ($page['slug'] ?? $title));
-            if ($slug === '') {
+            $slug = Str::limit(Str::slug((string) ($page['slug'] ?? $title)), 180, '');
+            if ($slug === '' || isset($usedSlugs[$slug])) {
                 continue;
             }
 
+            $usedSlugs[$slug] = true;
+            $metaDescription = trim((string) ($page['meta_description'] ?? ''));
+
             $pages[] = [
-                'slug' => Str::limit($slug, 180, ''),
+                'slug' => $slug,
                 'page_type' => Str::limit((string) ($page['page_type'] ?? 'service'), 40, ''),
                 'title' => Str::limit($title, 255, ''),
-                'meta_description' => Str::limit(trim((string) ($page['meta_description'] ?? '')), 320, ''),
+                'meta_description' => Str::limit($metaDescription, 320, ''),
                 'content' => $content,
             ];
         }
