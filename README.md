@@ -122,6 +122,11 @@ A full repository validation pass was performed after the deployment-readiness w
 - Payment transaction references are protected against duplicate reuse.
 - Payment destinations are configured through server-side environment variables and are never accepted from the browser.
 - Payment intake tests verify that submitted payments remain pending and cannot activate a paid plan by themselves.
+- Admin payment verification now uses a server-side email allowlist and never trusts a client-supplied admin flag.
+- Payment approval is transactional and row-locked; a reviewed payment cannot be approved or rejected again.
+- Approved payments activate the selected paid subscription, add the plan's AI credits and record the credit transaction atomically.
+- Rejected payments remain inactive and retain a reviewer audit reference.
+- Payment review tests cover non-admin denial, approval, rejection and repeated-approval idempotency.
 
 AI provider resilience is covered by automated tests for retrying rate-limit and temporary-server responses. The end-to-end project flow uses a fake AI provider in tests, so CI never requires real AI credentials.
 
@@ -138,7 +143,7 @@ The current subscription foundation provides four plans:
 | Pro | $15/month | 200 | 10 | 100 |
 | Agency | $39/month | 500 | 50 | 500 |
 
-Authenticated users can view plans at `/billing/plans`. Selecting **Free** updates the user's plan. Paid selections now open `/billing/payment`, where users select bKash or BEP20 and submit a transaction ID/TXID. The submission is stored as `pending`; it does not activate the paid plan until a trusted verification workflow approves it.
+Authenticated users can view plans at `/billing/plans`. Selecting **Free** updates the user's plan. Paid selections open `/billing/payment`, where users select bKash or BEP20 and submit a transaction ID/TXID. The submission is stored as `pending`; it does not activate the paid plan until an authorized administrator approves it.
 
 ### Payment configuration
 
@@ -148,9 +153,29 @@ Set these values only in the production `.env` file:
 BKASH_NUMBER=your-bkash-number
 BEP20_USDT_ADDRESS=your-bep20-usdt-address
 BEP20_NETWORK=BSC
+ADMIN_EMAILS=admin@example.com,another-admin@example.com
 ```
 
+`ADMIN_EMAILS` is the allowlist for the built-in payment review screen. `ADMIN_EMAIL` is accepted as a backwards-compatible single-admin fallback.
+
 Never commit real payment numbers, wallet addresses, API keys or provider credentials to Git.
+
+### Admin payment verification
+
+Authorized administrators can review pending payments at:
+
+```text
+/admin/payments
+```
+
+Available actions:
+
+- **Approve & Activate** — marks the payment approved, activates the paid plan for one month, adds the plan's AI credits, expires any previous active subscription and records the credit/payment audit data in one database transaction.
+- **Reject** — marks the payment rejected without changing the user's plan or credits.
+
+The server checks the authenticated user's normalized email against `ADMIN_EMAILS`. A client cannot grant itself admin access. Payment rows are locked during review, and only `pending` payments may be processed, preventing double-credit/double-subscription activation.
+
+The approval flow does **not** perform automatic bKash or blockchain verification. An administrator/provider must independently verify the submitted transaction before approving it.
 
 ## Security principles
 
@@ -159,7 +184,7 @@ Never commit real payment numbers, wallet addresses, API keys or provider creden
 - Payment secrets stay server-side.
 - Validate and authorize every project/resource request.
 - Rate-limit generation and authentication endpoints.
-- Rate-limit payment submission endpoints.
+- Rate-limit payment submission and admin review endpoints.
 - Treat AI output as untrusted data.
 - Sanitize generated HTML before preview/export where applicable.
 - Normalize authentication identifiers before lookup.
@@ -247,4 +272,4 @@ The server must also have a working Laravel mail configuration for alert deliver
 
 ## Status
 
-Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, security auditing, isolated feature testing, complete project-flow testing, the subscription foundation and secure payment intake are implemented. Paid subscription activation remains pending the admin/provider verification workflow. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
+Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, security auditing, isolated feature testing, complete project-flow testing, the subscription foundation, secure payment intake and admin payment verification are implemented. Payment verification remains a manual trust step; automatic bKash/provider or on-chain verification is not claimed. Production should still be validated on the actual cPanel server with real environment credentials before public launch.

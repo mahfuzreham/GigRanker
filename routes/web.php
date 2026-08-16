@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\AdminPaymentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\PaymentController;
@@ -34,6 +35,15 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/billing/payment', [PaymentController::class, 'store'])
         ->middleware('throttle:5,10')
         ->name('payments.store');
+
+    Route::get('/admin/payments', [AdminPaymentController::class, 'index'])->name('admin.payments.index');
+    Route::post('/admin/payments/{payment}/approve', [AdminPaymentController::class, 'approve'])
+        ->middleware('throttle:30,1')
+        ->name('admin.payments.approve');
+    Route::post('/admin/payments/{payment}/reject', [AdminPaymentController::class, 'reject'])
+        ->middleware('throttle:30,1')
+        ->name('admin.payments.reject');
+
     Route::get('/projects/create', [ProjectController::class, 'create'])->name('projects.create');
     Route::post('/projects', [ProjectController::class, 'store'])->middleware('throttle:20,1')->name('projects.store');
     Route::post('/projects/{project}/generate', [ProjectController::class, 'generate'])
