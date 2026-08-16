@@ -9,8 +9,8 @@ use App\Services\Billing\PlanCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
-use RuntimeException;
 
 class AdminPaymentController extends Controller
 {
@@ -36,12 +36,12 @@ class AdminPaymentController extends Controller
             $lockedPayment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
 
             if ($lockedPayment->status !== 'pending') {
-                throw new RuntimeException('Only pending payments can be approved.');
+                throw ValidationException::withMessages(['payment' => 'Only pending payments can be approved.']);
             }
 
             $plan = PlanCatalog::get((string) $lockedPayment->plan);
             if ($plan === null || $plan['price'] <= 0) {
-                throw new RuntimeException('The payment references an invalid paid plan.');
+                throw ValidationException::withMessages(['payment' => 'The payment references an invalid paid plan.']);
             }
 
             $user = $lockedPayment->user()->lockForUpdate()->firstOrFail();
@@ -75,7 +75,7 @@ class AdminPaymentController extends Controller
 
             $lockedPayment->update([
                 'status' => 'approved',
-                'paid_at' => $lockedPayment->paid_at ?? $now,
+                'paid_at' => $now,
                 'verified_at' => $now,
                 'reviewed_at' => $now,
                 'verified_by_user_id' => $admin->id,
@@ -94,7 +94,7 @@ class AdminPaymentController extends Controller
             $lockedPayment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
 
             if ($lockedPayment->status !== 'pending') {
-                throw new RuntimeException('Only pending payments can be rejected.');
+                throw ValidationException::withMessages(['payment' => 'Only pending payments can be rejected.']);
             }
 
             $now = now();
