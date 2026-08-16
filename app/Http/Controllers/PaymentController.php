@@ -59,7 +59,7 @@ class PaymentController extends Controller
             'currency' => $plan['currency'],
             'merchant_reference' => 'GR-'.strtoupper(Str::random(20)),
             'transaction_reference' => $validated['transaction_reference'],
-            'paid_at' => now(),
+            'paid_at' => null,
         ]);
 
         return redirect()->route('billing.plans')->with('success', 'Payment submitted for verification. Your paid plan activates only after verification.');
