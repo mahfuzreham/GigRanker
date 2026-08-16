@@ -104,6 +104,9 @@ A full repository validation pass was performed after the deployment-readiness w
 - Rollback execution now refuses to reset a dirty Git working tree, preventing accidental destruction of uncommitted production changes.
 - AI-generated duplicate page slugs are ignored so one generated page cannot silently overwrite another.
 - AI request JSON encoding is checked explicitly before sending the provider request.
+- Gemini and OpenAI-compatible providers now retry transient `408`, `429`, `500`, `502`, `503`, and `504` failures, while still failing fast on non-transient HTTP errors.
+
+AI provider resilience is covered by automated tests for retrying rate-limit and temporary-server responses.
 
 The latest quality workflow is required to pass on **PHP 8.2 and PHP 8.3**, including Composer validation, dependency auditing, PHP syntax checks, Laravel boot/route checks, Artisan command discovery and application tests.
 
