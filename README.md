@@ -82,6 +82,12 @@ composer check-platform-reqs
 
 Do not mark the server ready until `composer check-platform-reqs` passes and `ZipArchive` is available for the export feature.
 
+## Automated code quality / syntax checks
+
+Every push and pull request runs the GitHub Actions quality workflow against **PHP 8.2 and PHP 8.3**. It validates Composer configuration, installs dependencies, runs `php -l` against every tracked PHP source file, boots Laravel, checks routes and verifies the deployment/rollback/backup/health Artisan commands. Application tests are also executed when present.
+
+The security workflow separately checks PHP syntax and scans tracked files for common hard-coded secret assignments. A production release should not proceed while either workflow is failing.
+
 ## Security principles
 
 - Never commit `.env` or API secrets.
@@ -173,4 +179,4 @@ The server must also have a working Laravel mail configuration for alert deliver
 
 ## Status
 
-Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, and the PHP/cPanel deployment checklist are documented. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
+Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, and automated syntax/quality checks are implemented. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
