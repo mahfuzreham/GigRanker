@@ -102,6 +102,8 @@ A full repository validation pass was performed after the deployment-readiness w
 - Project ownership and Fiverr URL validation are now covered by feature tests.
 - CI now runs Composer vulnerability auditing.
 - Rollback execution now refuses to reset a dirty Git working tree, preventing accidental destruction of uncommitted production changes.
+- AI-generated duplicate page slugs are ignored so one generated page cannot silently overwrite another.
+- AI request JSON encoding is checked explicitly before sending the provider request.
 
 The latest quality workflow is required to pass on **PHP 8.2 and PHP 8.3**, including Composer validation, dependency auditing, PHP syntax checks, Laravel boot/route checks, Artisan command discovery and application tests.
 
