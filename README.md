@@ -48,9 +48,9 @@ Repository: `mahfuzreham/GigRanker`
 
 ## Deployment history / logging
 
-GigRanker now records deployment lifecycle events in the `deployments` table. Each record includes a UUID, environment, release version, Git commit SHA, status, start/finish timestamps, duration, trigger/source information, message and optional metadata.
+GigRanker records deployment lifecycle events in the `deployments` table. Each record includes a UUID, environment, release version, Git commit SHA, status, start/finish timestamps, duration, trigger/source information, message and optional metadata.
 
-The `DeploymentLogger` service supports starting a deployment and marking it successful or failed. The Artisan command below can be used by cPanel deployment scripts, CI jobs or administrators:
+Use the deployment logger command from cPanel deployment scripts, CI jobs or administrators:
 
 ```bash
 php artisan gigranker:deployment start --environment=production --version=2026.08.16 --triggered-by=github-actions --source=main
@@ -59,8 +59,22 @@ php artisan gigranker:deployment fail --id=<deployment-uuid> --message="Deployme
 php artisan gigranker:deployment list
 ```
 
-The application can also pick up the Git commit SHA from `GIT_COMMIT` or `GITHUB_SHA` when a commit is not explicitly supplied. Deployment history is intended to become the audit source for the upcoming pre-deployment backup and rollback features.
+## Rollback
+
+Rollback targets must reference a previously successful deployment. By default the command only validates the target and creates an audit record; it does not modify the working tree.
+
+```bash
+php artisan gigranker:rollback <deployment-uuid>
+```
+
+To execute the code rollback on a Git working tree, an explicit confirmation is required:
+
+```bash
+php artisan gigranker:rollback <deployment-uuid> --execute --yes
+```
+
+The rollback service fetches repository refs, verifies the target commit, and resets the working tree to that commit. It records the rollback as a new deployment-history entry, including the previous and resulting commit SHA. **Database migrations are never reversed automatically**; schema rollback must be handled separately and deliberately.
 
 ## Status
 
-Deployment history/logging is implemented. The project remains under development and is not production-ready yet.
+Deployment history/logging and safe rollback are implemented. Pre-deployment backups and production health checks remain before production readiness.
