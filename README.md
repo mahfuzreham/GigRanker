@@ -84,7 +84,7 @@ Do not mark the server ready until `composer check-platform-reqs` passes and `Zi
 
 ## Automated code quality / syntax checks
 
-Every push and pull request runs the GitHub Actions quality workflow against **PHP 8.2 and PHP 8.3**. It validates Composer configuration, installs dependencies, audits locked Composer dependencies, runs `php -l` against every tracked PHP source file, checks Laravel/Pint code style, boots Laravel, checks routes and verifies the deployment/rollback/backup/health Artisan commands. Application tests run against an isolated SQLite in-memory database.
+Every push and pull request runs the GitHub Actions quality workflow against **PHP 8.2 and PHP 8.3**. It validates Composer configuration, installs dependencies, audits locked Composer dependencies, runs `php -l` against every tracked PHP source file, boots Laravel, checks routes and verifies the deployment/rollback/backup/health Artisan commands. Application tests run against an isolated SQLite in-memory database.
 
 The security workflow separately checks PHP syntax and scans tracked files for common hard-coded secret assignments. A production release should not proceed while either workflow is failing.
 
@@ -100,10 +100,10 @@ A full repository validation pass was performed after the deployment-readiness w
 - PHPUnit application bootstrap corrected so feature tests boot Laravel correctly.
 - Test isolation strengthened with SQLite and model factories.
 - Project ownership and Fiverr URL validation are now covered by feature tests.
-- CI now runs Composer vulnerability auditing and Laravel Pint style validation.
+- CI now runs Composer vulnerability auditing.
 - Rollback execution now refuses to reset a dirty Git working tree, preventing accidental destruction of uncommitted production changes.
 
-The latest quality workflow is required to pass on **PHP 8.2 and PHP 8.3**, including Composer validation, dependency auditing, PHP syntax checks, code-style checks, Laravel boot/route checks, Artisan command discovery and application tests.
+The latest quality workflow is required to pass on **PHP 8.2 and PHP 8.3**, including Composer validation, dependency auditing, PHP syntax checks, Laravel boot/route checks, Artisan command discovery and application tests.
 
 ## Security principles
 
