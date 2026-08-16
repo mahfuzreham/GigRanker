@@ -101,8 +101,9 @@ A full repository validation pass was performed after the deployment-readiness w
 - Test isolation strengthened with SQLite and model factories.
 - Project ownership and Fiverr URL validation are now covered by feature tests.
 - CI now runs Composer vulnerability auditing and Laravel Pint style validation.
+- Rollback execution now refuses to reset a dirty Git working tree, preventing accidental destruction of uncommitted production changes.
 
-The final quality workflow completed successfully on **PHP 8.2 and PHP 8.3**, including Composer validation, dependency auditing, PHP syntax checks, code-style checks, Laravel boot/route checks, Artisan command discovery and application tests.
+The latest quality workflow is required to pass on **PHP 8.2 and PHP 8.3**, including Composer validation, dependency auditing, PHP syntax checks, code-style checks, Laravel boot/route checks, Artisan command discovery and application tests.
 
 ## Security principles
 
@@ -150,7 +151,7 @@ To execute the code rollback on a Git working tree, an explicit confirmation is 
 php artisan gigranker:rollback <deployment-uuid> --execute --yes
 ```
 
-The rollback service fetches repository refs, verifies the target commit, and resets the working tree to that commit. It records the rollback as a new deployment-history entry, including the previous and resulting commit SHA. **Database migrations are never reversed automatically**; schema rollback must be handled separately and deliberately.
+The rollback service fetches repository refs, verifies the target commit, refuses to operate on a dirty working tree, and resets the working tree to that commit. It records the rollback as a new deployment-history entry, including the previous and resulting commit SHA. **Database migrations are never reversed automatically**; schema rollback must be handled separately and deliberately.
 
 ## Pre-deployment backups
 
@@ -195,4 +196,4 @@ The server must also have a working Laravel mail configuration for alert deliver
 
 ## Status
 
-Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, security auditing, isolated feature testing and the latest bug-fix validation are implemented. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
+Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, security auditing, isolated feature testing and the latest R&D bug-fix hardening are implemented. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
