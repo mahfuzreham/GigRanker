@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\WebsiteController;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +30,10 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/billing/select', [BillingController::class, 'select'])
         ->middleware('throttle:10,1')
         ->name('billing.select');
+    Route::get('/billing/payment', [PaymentController::class, 'create'])->name('payments.create');
+    Route::post('/billing/payment', [PaymentController::class, 'store'])
+        ->middleware('throttle:5,10')
+        ->name('payments.store');
     Route::get('/projects/create', [ProjectController::class, 'create'])->name('projects.create');
     Route::post('/projects', [ProjectController::class, 'store'])->middleware('throttle:20,1')->name('projects.store');
     Route::post('/projects/{project}/generate', [ProjectController::class, 'generate'])
