@@ -18,7 +18,7 @@ class StaticSiteExporter
             throw new RuntimeException('Generate SEO pages before exporting the website.');
         }
 
-        $baseUrl = rtrim((string) ($project->site_url ?: config('app.url')), '/');
+        $baseUrl = $this->safeBaseUrl($project->site_url ?: config('app.url'));
         $siteName = trim((string) ($project->brand_name ?: $project->gig_title ?: 'Gig Marketing Website'));
         $homeTitle = trim((string) ($project->gig_title ?: $siteName));
         $homeDescription = trim((string) ($pages->first()->meta_description ?: 'SEO-ready marketing website for a freelance service.'));
@@ -27,7 +27,16 @@ class StaticSiteExporter
         $files['index.html'] = $this->pageHtml($project, $siteName, $homeTitle, $homeDescription, $this->homeContent($project, $pages), $pages, true, $baseUrl);
 
         foreach ($pages as $page) {
-            $files[$page->slug.'.html'] = $this->pageHtml($project, $siteName, (string) $page->title, (string) $page->meta_description, (string) $page->content, $pages, false, $baseUrl, $page);
+            $slug = $this->safeSlug($page->slug);
+            if ($slug === null) {
+                continue;
+            }
+
+            $files[$slug.'.html'] = $this->pageHtml($project, $siteName, (string) $page->title, (string) $page->meta_description, (string) $page->content, $pages, false, $baseUrl, $page, $slug);
+        }
+
+        if (count($files) === 1) {
+            throw new RuntimeException('No valid SEO page slugs are available for export.');
         }
 
         $files['sitemap.xml'] = $this->sitemap($pages, $baseUrl);
@@ -45,10 +54,24 @@ class StaticSiteExporter
             throw new RuntimeException('Unable to create ZIP export.');
         }
 
-        foreach ($files as $filename => $content) {
-            $zip->addFromString($filename, $content);
+        try {
+            foreach ($files as $filename => $content) {
+                if (! $this->safeArchivePath($filename)) {
+                    throw new RuntimeException('Unsafe export filename detected.');
+                }
+                if (! $zip->addFromString($filename, $content)) {
+                    throw new RuntimeException('Unable to add export file to ZIP.');
+                }
+            }
+
+            if ($zip->close() !== true) {
+                throw new RuntimeException('Unable to finalize ZIP export.');
+            }
+        } catch (\Throwable $exception) {
+            $zip->close();
+            @unlink($zipPath);
+            throw $exception;
         }
-        $zip->close();
 
         return $zipPath;
     }
@@ -62,13 +85,20 @@ class StaticSiteExporter
             . "\n\n## Explore Our Services\n\n".$links;
     }
 
-    private function pageHtml(Project $project, string $siteName, string $title, string $description, string $content, $pages, bool $home, string $baseUrl, ?ProjectPage $current = null): string
+    private function pageHtml(Project $project, string $siteName, string $title, string $description, string $content, $pages, bool $home, string $baseUrl, ?ProjectPage $current = null, ?string $currentSlug = null): string
     {
-        $canonical = $home ? $baseUrl.'/' : $baseUrl.'/'.$current->slug.'.html';
+        $canonical = $home ? $baseUrl.'/' : $baseUrl.'/'.$currentSlug.'.html';
         $cta = rtrim((string) config('app.url'), '/').'/go/'.$project->id.($current ? '?page='.$current->id : '');
         $links = $pages->filter(fn (ProjectPage $page): bool => ! $current || $page->id !== $current->id)
             ->take(8)
-            ->map(fn (ProjectPage $page): string => '<li><a href="'.$this->esc($page->slug.'.html').'">'.$this->esc($page->title).'</a></li>')
+            ->map(function (ProjectPage $page): string {
+                $slug = $this->safeSlug($page->slug);
+                if ($slug === null) {
+                    return '';
+                }
+
+                return '<li><a href="'.$this->esc($slug.'.html').'">'.$this->esc((string) $page->title).'</a></li>';
+            })
             ->implode('');
 
         $schema = json_encode([
@@ -79,7 +109,7 @@ class StaticSiteExporter
             'provider' => ['@type' => 'Person', 'name' => $siteName],
             'areaServed' => $project->target_country ?: 'United States',
             'url' => $canonical,
-        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_HEX_TAG | JSON_HEX_AMP);
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_HEX_TAG | JSON_HEX_AMP | JSON_THROW_ON_ERROR);
 
         $body = $this->markdownToHtml($content);
 
@@ -128,13 +158,46 @@ class StaticSiteExporter
     {
         $urls = [$baseUrl.'/'];
         foreach ($pages as $page) {
-            $urls[] = $baseUrl.'/'.$page->slug.'.html';
+            $slug = $this->safeSlug($page->slug);
+            if ($slug !== null) {
+                $urls[] = $baseUrl.'/'.$slug.'.html';
+            }
         }
         $xml = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
         foreach ($urls as $url) {
             $xml .= '<url><loc>'.htmlspecialchars($url, ENT_XML1 | ENT_QUOTES, 'UTF-8').'</loc></url>';
         }
         return $xml.'</urlset>';
+    }
+
+    private function safeSlug(string $slug): ?string
+    {
+        $slug = trim($slug);
+        if ($slug === '' || ! preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $slug)) {
+            return null;
+        }
+
+        return strlen($slug) <= 180 ? $slug : null;
+    }
+
+    private function safeArchivePath(string $path): bool
+    {
+        return $path !== ''
+            && ! str_contains($path, '\\')
+            && ! str_starts_with($path, '/')
+            && ! str_contains($path, '../')
+            && ! str_contains($path, '..\\');
+    }
+
+    private function safeBaseUrl(mixed $value): string
+    {
+        $url = rtrim(trim((string) $value), '/');
+        $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+        if ($url === '' || ! in_array($scheme, ['http', 'https'], true) || preg_match('/[\r\n]/', $url)) {
+            throw new RuntimeException('The export site URL must be a valid HTTP or HTTPS URL.');
+        }
+
+        return $url;
     }
 
     private function esc(string $value): string
