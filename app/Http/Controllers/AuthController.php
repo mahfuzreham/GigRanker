@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class AuthController extends Controller
@@ -23,6 +24,8 @@ class AuthController extends Controller
             'email' => ['required', 'email', 'max:255'],
             'password' => ['required', 'string', 'max:255'],
         ]);
+
+        $credentials['email'] = Str::lower(trim($credentials['email']));
 
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             return back()->withErrors(['email' => 'The provided credentials are incorrect.'])->onlyInput('email');
@@ -45,6 +48,8 @@ class AuthController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:12', 'max:255', 'confirmed'],
         ]);
+
+        $validated['email'] = Str::lower(trim($validated['email']));
 
         $user = User::create($validated);
         Auth::login($user);
