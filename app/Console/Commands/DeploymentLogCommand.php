@@ -29,8 +29,8 @@ class DeploymentLogCommand extends Command
 
         return match ($action) {
             'start' => $this->start($logger),
-            'success' => $this->complete($logger, true),
-            'fail' => $this->complete($logger, false),
+            'success' => $this->finalizeDeployment($logger, true),
+            'fail' => $this->finalizeDeployment($logger, false),
             'list' => $this->listDeployments(),
             default => $this->invalidAction($action),
         };
@@ -50,7 +50,7 @@ class DeploymentLogCommand extends Command
         return self::SUCCESS;
     }
 
-    private function complete(DeploymentLogger $logger, bool $success): int
+    private function finalizeDeployment(DeploymentLogger $logger, bool $success): int
     {
         $id = $this->option('id');
         if (! is_string($id) || $id === '') {
@@ -65,9 +65,12 @@ class DeploymentLogCommand extends Command
         }
 
         try {
+            $message = $this->option('message');
+            $message = is_string($message) ? $message : null;
+
             $deployment = $success
-                ? $logger->succeed($deployment, $this->option('message'))
-                : $logger->fail($deployment, $this->option('message'));
+                ? $logger->succeed($deployment, $message)
+                : $logger->fail($deployment, $message);
         } catch (Throwable $exception) {
             $this->error($exception->getMessage());
             return self::FAILURE;
