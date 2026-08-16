@@ -113,8 +113,10 @@ A full repository validation pass was performed after the deployment-readiness w
 - Authentication normalizes email addresses before lookup and regenerates sessions after successful authentication.
 - Logout invalidates the session and regenerates the CSRF token.
 - Authentication, guest-access and session lifecycle flows are covered by feature tests.
+- The complete project flow is covered from project creation through AI generation, preview, ZIP export and outbound Fiverr click tracking.
+- Cross-user access to project generation, preview and export is explicitly tested.
 
-AI provider resilience is covered by automated tests for retrying rate-limit and temporary-server responses.
+AI provider resilience is covered by automated tests for retrying rate-limit and temporary-server responses. The end-to-end project flow uses a fake AI provider in tests, so CI never requires real AI credentials.
 
 The latest quality workflow is required to pass on **PHP 8.2 and PHP 8.3**, including Composer validation, dependency auditing, PHP syntax checks, Laravel boot/route checks, Artisan command discovery and application tests.
 
@@ -211,4 +213,4 @@ The server must also have a working Laravel mail configuration for alert deliver
 
 ## Status
 
-Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, security auditing, isolated feature testing and the latest R&D authentication hardening are implemented. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
+Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, security auditing, isolated feature testing and the complete project user-flow testing are implemented. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
