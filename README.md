@@ -2,6 +2,161 @@
 
 **Turn Your Freelance Gig Into an SEO Marketing Website.**
 
+## 🚀 cPanel Terminal — Deploy / Update from GitHub
+
+Use the following commands in **cPanel Terminal** to download the complete GigRanker code from GitHub and deploy/update the application. Repository: `mahfuzreham/GigRanker`.
+
+### First deployment — empty `public_html`
+
+If `/home/gigranker/public_html` is empty, clone the `main` branch directly:
+
+```bash
+cd /home/gigranker
+rm -rf /tmp/GigRanker-deploy
+
+git clone --branch main --single-branch https://github.com/mahfuzreham/GigRanker.git /tmp/GigRanker-deploy
+
+cp -a /tmp/GigRanker-deploy/. /home/gigranker/public_html/
+cd /home/gigranker/public_html
+rm -rf /tmp/GigRanker-deploy
+```
+
+Then install dependencies and prepare Laravel:
+
+```bash
+cd /home/gigranker/public_html
+
+composer install --no-dev --optimize-autoloader --no-interaction
+
+# Create .env only if it does not already exist.
+[ -f .env ] || cp .env.example .env
+
+php artisan key:generate --force
+php artisan storage:link
+php artisan optimize:clear
+php artisan migrate --force
+php artisan optimize
+```
+
+> **Important:** Never run `cp .env.example .env` over an existing production `.env`. Keep real database, mail, AI and payment credentials only in `.env` and never commit them to Git.
+
+### Existing installation — update to latest `main`
+
+For an existing Git checkout:
+
+```bash
+cd /home/gigranker/public_html
+
+git fetch origin main
+git checkout main
+git pull --ff-only origin main
+
+composer install --no-dev --optimize-autoloader --no-interaction
+php artisan optimize:clear
+php artisan migrate --force
+php artisan storage:link
+php artisan optimize
+```
+
+Before updating production, create a backup and check the working tree:
+
+```bash
+cd /home/gigranker/public_html
+
+git status --short
+php artisan gigranker:backup create --environment=production
+php artisan gigranker:health --json
+```
+
+Do **not** use `git reset --hard` on production unless you intentionally want to discard local/uncommitted files. The normal update command uses `git pull --ff-only` to avoid silently overwriting local changes.
+
+### If `public_html` is not currently a Git checkout
+
+If the existing application was uploaded manually and you want Git tracking without deleting the current `.env`, initialize the repository carefully:
+
+```bash
+cd /home/gigranker/public_html
+
+git init
+git remote add origin https://github.com/mahfuzreham/GigRanker.git
+git fetch origin main
+git checkout -B main origin/main
+```
+
+If Git reports local files would be overwritten, **stop and back up the current directory first**. Do not force-reset until you have confirmed that all required production files are backed up.
+
+### Production environment after code download
+
+Edit the production environment file:
+
+```bash
+cd /home/gigranker/public_html
+nano .env
+```
+
+At minimum, configure:
+
+```env
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://your-domain.example
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=your_database
+DB_USERNAME=your_database_user
+DB_PASSWORD=your_database_password
+
+ADMIN_EMAIL=your-admin@example.com
+ADMIN_EMAILS=your-admin@example.com
+
+BKASH_NUMBER=your-bkash-number
+BEP20_USDT_ADDRESS=your-bep20-usdt-address
+BEP20_NETWORK=BSC
+```
+
+Also configure the selected mail and AI provider credentials in `.env`. **Never paste real secrets into GitHub, README, issues or commits.**
+
+### Verify the cPanel PHP environment
+
+```bash
+cd /home/gigranker/public_html
+php -v
+php -m | sort
+composer --version
+composer check-platform-reqs
+php -r 'echo class_exists("ZipArchive") ? "ZipArchive: OK\n" : "ZipArchive: MISSING\n";'
+php -r 'echo extension_loaded("pdo_mysql") ? "pdo_mysql: OK\n" : "pdo_mysql: MISSING\n";'
+```
+
+Recommended production PHP: **PHP 8.3.x**, provided the cPanel host has the required packages/extensions available.
+
+### Final live test
+
+After configuration and migrations:
+
+```bash
+cd /home/gigranker/public_html
+php artisan gigranker:health
+php artisan gigranker:health --json
+php artisan route:list --except-vendor
+```
+
+If the health check returns failure, **do not consider production ready** until the failing check is fixed.
+
+### Laravel scheduler cron on cPanel
+
+Add this cron job in cPanel:
+
+```cron
+* * * * * cd /home/gigranker/public_html && php artisan schedule:run >> /dev/null 2>&1
+```
+
+This runs the application's scheduled tasks, including the production health check scheduled for the 1st and 16th of each month at 03:00.
+
+---
+
 GigRanker is a planned Laravel SaaS platform for creating SEO-focused marketing websites around freelance service listings. Users provide their gig/service information, target market and branding; GigRanker generates structured SEO content, service pages, blog content, internal links, schema markup, sitemap/robots files and conversion-focused CTAs.
 
 ## Product goals
