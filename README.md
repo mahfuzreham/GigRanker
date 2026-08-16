@@ -110,6 +110,9 @@ A full repository validation pass was performed after the deployment-readiness w
 - ZIP entry names are validated before being written.
 - Exported HTML escapes AI/user content, and JSON-LD encoding now fails safely instead of producing invalid markup.
 - Export tests cover path traversal, HTML injection and invalid site URL handling.
+- Authentication normalizes email addresses before lookup and regenerates sessions after successful authentication.
+- Logout invalidates the session and regenerates the CSRF token.
+- Authentication, guest-access and session lifecycle flows are covered by feature tests.
 
 AI provider resilience is covered by automated tests for retrying rate-limit and temporary-server responses.
 
@@ -124,6 +127,8 @@ The latest quality workflow is required to pass on **PHP 8.2 and PHP 8.3**, incl
 - Rate-limit generation and authentication endpoints.
 - Treat AI output as untrusted data.
 - Sanitize generated HTML before preview/export where applicable.
+- Normalize authentication identifiers before lookup.
+- Regenerate the session after authentication and invalidate it on logout.
 - Keep dependencies updated and run security checks before production releases.
 
 ## Deployment target
@@ -206,4 +211,4 @@ The server must also have a working Laravel mail configuration for alert deliver
 
 ## Status
 
-Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, security auditing, isolated feature testing and the latest R&D bug-fix hardening are implemented. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
+Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, security auditing, isolated feature testing and the latest R&D authentication hardening are implemented. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
