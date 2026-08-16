@@ -88,6 +88,19 @@ Every push and pull request runs the GitHub Actions quality workflow against **P
 
 The security workflow separately checks PHP syntax and scans tracked files for common hard-coded secret assignments. A production release should not proceed while either workflow is failing.
 
+## Bug-fix / validation status
+
+A full repository validation pass was performed after the deployment-readiness work. The quality workflow found and fixed real application issues, including:
+
+- Symfony/Laravel command method collision in `DeploymentLogCommand`.
+- Missing base HTTP `Controller` class.
+- Deployment command registration cleanup in Laravel bootstrap.
+- Missing Laravel framework cache/view/log directories in a clean checkout.
+- Missing PHPUnit bootstrap/configuration and smoke-test directories.
+- PHPUnit application bootstrap corrected so feature tests boot Laravel correctly.
+
+The final quality workflow completed successfully on **PHP 8.2 and PHP 8.3**, including Composer validation, PHP syntax checks for the repository PHP files, Laravel boot/route checks, Artisan command discovery and application smoke tests.
+
 ## Security principles
 
 - Never commit `.env` or API secrets.
@@ -179,4 +192,4 @@ The server must also have a working Laravel mail configuration for alert deliver
 
 ## Status
 
-Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, and automated syntax/quality checks are implemented. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
+Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, and the post-implementation bug-fix validation are implemented. The latest automated quality run passed on PHP 8.2 and 8.3. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
