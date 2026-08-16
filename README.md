@@ -75,6 +75,17 @@ php artisan gigranker:rollback <deployment-uuid> --execute --yes
 
 The rollback service fetches repository refs, verifies the target commit, and resets the working tree to that commit. It records the rollback as a new deployment-history entry, including the previous and resulting commit SHA. **Database migrations are never reversed automatically**; schema rollback must be handled separately and deliberately.
 
+## Pre-deployment backups
+
+Before a production deployment, create a database backup and associate it with the deployment record. Backups are stored under Laravel's local storage disk and are tracked in the `deployment_backups` table with status, path, size, duration and SHA-256 checksum.
+
+```bash
+php artisan gigranker:backup create --deployment=<deployment-uuid> --environment=production
+php artisan gigranker:backup list
+```
+
+The automated backup currently supports a configured MySQL database. A failed backup returns a non-zero command exit code so a deployment script can stop before changing production. Backup files and the application storage location must be protected with appropriate server permissions and retention policies.
+
 ## Status
 
-Deployment history/logging and safe rollback are implemented. Pre-deployment backups and production health checks remain before production readiness.
+Deployment history/logging, safe rollback, and pre-deployment database backups are implemented. Production health checks remain before production readiness.
