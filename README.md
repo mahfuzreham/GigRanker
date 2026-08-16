@@ -86,6 +86,17 @@ php artisan gigranker:backup list
 
 The automated backup currently supports a configured MySQL database. A failed backup returns a non-zero command exit code so a deployment script can stop before changing production. Backup files and the application storage location must be protected with appropriate server permissions and retention policies.
 
+## Production health checks
+
+Run the production readiness check before and after deployments:
+
+```bash
+php artisan gigranker:health
+php artisan gigranker:health --json
+```
+
+The check verifies production-safe application configuration, database connectivity, cache read/write, local storage read/write and required core configuration. A failed check exits non-zero so deployment automation can stop safely.
+
 ## Status
 
-Deployment history/logging, safe rollback, and pre-deployment database backups are implemented. Production health checks remain before production readiness.
+Deployment history/logging, safe rollback, pre-deployment database backups, and production health checks are implemented. The scheduled deployment-readiness implementation is complete; production should still be validated on the actual cPanel server with real environment credentials before public launch.
