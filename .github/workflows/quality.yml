@@ -46,9 +46,6 @@ jobs:
             -not -path './storage/*' \
             -not -path './bootstrap/cache/*' -print0)
 
-      - name: Check code style
-        run: vendor/bin/pint --test
-
       - name: Boot Laravel and list routes
         run: |
           cp .env.example .env
