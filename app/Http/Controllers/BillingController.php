@@ -36,6 +36,6 @@ class BillingController extends Controller
             return redirect()->route('billing.plans')->with('success', 'Free plan selected.');
         }
 
-        return redirect()->route('billing.plans')->with('info', 'Paid checkout is not enabled yet. A verified payment must activate paid plans.');
+        return redirect()->route('payments.create', ['plan' => $validated['plan']]);
     }
 }
