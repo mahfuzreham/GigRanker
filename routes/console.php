@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Console\Commands\DeploymentBackupCommand;
 use App\Console\Commands\DeploymentLogCommand;
 use App\Console\Commands\DeploymentRollbackCommand;
 use Illuminate\Support\Facades\Artisan;
@@ -14,5 +15,6 @@ Artisan::starting(function ($artisan): void {
     $artisan->resolveCommands([
         DeploymentLogCommand::class,
         DeploymentRollbackCommand::class,
+        DeploymentBackupCommand::class,
     ]);
 });
