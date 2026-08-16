@@ -53,6 +53,12 @@ class DeploymentRollbackService
         try {
             $this->git(['fetch', '--all', '--tags', '--prune']);
             $this->git(['cat-file', '-e', $target->commit_sha.'^{commit}']);
+
+            $dirtyFiles = $this->git(['status', '--porcelain']);
+            if ($dirtyFiles !== '') {
+                throw new RuntimeException('Rollback aborted because the Git working tree contains uncommitted changes.');
+            }
+
             $this->git(['reset', '--hard', $target->commit_sha]);
 
             $rollback->update([
