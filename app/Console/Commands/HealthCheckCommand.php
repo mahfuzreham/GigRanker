@@ -22,10 +22,9 @@ class HealthCheckCommand extends Command
     public function handle(): int
     {
         $checks = [];
-
         $checks['app_key'] = $this->check('Application key', static fn (): bool => is_string(config('app.key')) && config('app.key') !== '');
         $checks['debug'] = $this->check('Debug disabled', static fn (): bool => config('app.debug') === false);
-        $checks['url'] = $this->check('Application URL', static fn (): bool => is_string(config('app.url')) && preg_match('#^https?://#i', config('app.url')) === 1);
+        $checks['url'] = $this->check('Application URL', static fn (): bool => is_string(config('app.url')) && preg_match('#^https?://#i', (string) config('app.url')) === 1);
         $checks['database'] = $this->check('Database connection', static function (): bool {
             DB::connection()->getPdo();
             DB::select('select 1');
@@ -78,7 +77,8 @@ class HealthCheckCommand extends Command
     private function check(string $name, callable $callback): array
     {
         try {
-            return ['status' => $callback() ? 'ok' : 'failed', 'message' => $callback() ? '' : $name.' check returned false'];
+            $result = $callback();
+            return ['status' => $result ? 'ok' : 'failed', 'message' => $result ? '' : $name.' check returned false'];
         } catch (Throwable $exception) {
             return ['status' => 'failed', 'message' => $exception->getMessage()];
         }
@@ -89,6 +89,7 @@ class HealthCheckCommand extends Command
     {
         $recipient = config('mail.admin_email', env('ADMIN_EMAIL'));
         if (! is_string($recipient) || $recipient === '') {
+            $this->warn('ADMIN_EMAIL is not configured; health alert was not sent.');
             return;
         }
 
