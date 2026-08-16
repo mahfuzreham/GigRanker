@@ -84,7 +84,7 @@ Do not mark the server ready until `composer check-platform-reqs` passes and `Zi
 
 ## Automated code quality / syntax checks
 
-Every push and pull request runs the GitHub Actions quality workflow against **PHP 8.2 and PHP 8.3**. It validates Composer configuration, installs dependencies, runs `php -l` against every tracked PHP source file, boots Laravel, checks routes and verifies the deployment/rollback/backup/health Artisan commands. Application tests are also executed when present.
+Every push and pull request runs the GitHub Actions quality workflow against **PHP 8.2 and PHP 8.3**. It validates Composer configuration, installs dependencies, audits locked Composer dependencies, runs `php -l` against every tracked PHP source file, checks Laravel/Pint code style, boots Laravel, checks routes and verifies the deployment/rollback/backup/health Artisan commands. Application tests run against an isolated SQLite in-memory database.
 
 The security workflow separately checks PHP syntax and scans tracked files for common hard-coded secret assignments. A production release should not proceed while either workflow is failing.
 
@@ -98,8 +98,11 @@ A full repository validation pass was performed after the deployment-readiness w
 - Missing Laravel framework cache/view/log directories in a clean checkout.
 - Missing PHPUnit bootstrap/configuration and smoke-test directories.
 - PHPUnit application bootstrap corrected so feature tests boot Laravel correctly.
+- Test isolation strengthened with SQLite and model factories.
+- Project ownership and Fiverr URL validation are now covered by feature tests.
+- CI now runs Composer vulnerability auditing and Laravel Pint style validation.
 
-The final quality workflow completed successfully on **PHP 8.2 and PHP 8.3**, including Composer validation, PHP syntax checks for the repository PHP files, Laravel boot/route checks, Artisan command discovery and application smoke tests.
+The final quality workflow completed successfully on **PHP 8.2 and PHP 8.3**, including Composer validation, dependency auditing, PHP syntax checks, code-style checks, Laravel boot/route checks, Artisan command discovery and application tests.
 
 ## Security principles
 
@@ -174,7 +177,7 @@ The check verifies production-safe application configuration, database connectiv
 
 ### Automatic 15-day check
 
-Production health checks are scheduled for **03:00 on the 1st and 16th of every month** (roughly a 15-day cadence). The scheduler runs `gigranker:health --json --notify-admin` and prevents overlapping runs.
+Production health checks are scheduled for **03:00 on the 1st and 16th of every month** (roughly a 15-day recurring cadence). The scheduler runs `gigranker:health --json --notify-admin` and prevents overlapping runs.
 
 On cPanel, the Laravel scheduler still needs the standard cron entry:
 
@@ -192,4 +195,4 @@ The server must also have a working Laravel mail configuration for alert deliver
 
 ## Status
 
-Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, and the post-implementation bug-fix validation are implemented. The latest automated quality run passed on PHP 8.2 and 8.3. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
+Deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, security auditing, isolated feature testing and the latest bug-fix validation are implemented. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
