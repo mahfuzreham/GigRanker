@@ -10,15 +10,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table): void {
-            $table->string('plan', 40)->default('free')->after('password');
-        });
+        if (! Schema::hasColumn('users', 'plan')) {
+            Schema::table('users', function (Blueprint $table): void {
+                $table->string('plan', 40)->default('free')->after('password');
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table): void {
-            $table->dropColumn('plan');
-        });
+        if (Schema::hasColumn('users', 'plan')) {
+            Schema::table('users', function (Blueprint $table): void {
+                $table->dropColumn('plan');
+            });
+        }
     }
 };
