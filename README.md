@@ -5,14 +5,39 @@
 
 Turn a freelance gig into an SEO-focused marketing website with AI-assisted content generation, project pages, blogs, SEO metadata, schema markup, sitemap/robots output, outbound click tracking, subscriptions, **BEP20 USDT-only payment intake**, deployment history, backups, rollback and production health checks.
 
-## Latest UI / billing update
+## Latest Admin Settings update
 
-- Clean white, responsive SaaS interface across public, user and admin areas.
-- Conversion-focused homepage with features, workflow, plans and payment messaging.
-- Paid checkout accepts **BEP20 USDT only**.
-- Users submit the blockchain TXID after sending the exact USDT amount.
-- Paid subscriptions remain pending until an authorized administrator verifies the payment.
-- The receiving BEP20 wallet and network can now be managed from the admin settings screen; `.env` remains the production fallback.
+The Admin Settings system is now connected to runtime AI generation and billing configuration.
+
+- Gemini, Groq and OpenAI API keys can be saved from Admin → Settings.
+- API keys are encrypted at rest with Laravel application encryption.
+- AI provider selection is read from the database at generation time.
+- AI model selection is read from the database at generation time.
+- BEP20 USDT receiving wallet and network are read from the database at checkout time.
+- `.env` remains the safe fallback for initial/bootstrap configuration.
+- No API key, wallet secret or password is committed to GitHub.
+
+## Admin Settings
+
+```text
+/admin/settings
+```
+
+Available controls:
+
+### AI
+
+- Primary provider: Gemini / Groq / OpenAI
+- Gemini API key + model
+- Groq API key + model
+- OpenAI API key + model
+
+### Payments
+
+- BEP20 USDT receiving address
+- BSC / BEP20 network
+
+Existing secrets are masked. Leave an API-key field blank to keep the existing encrypted value.
 
 ## Stack
 
@@ -74,7 +99,7 @@ DB_PASSWORD=your_database_password
 ADMIN_EMAILS=your-admin@example.com
 ```
 
-AI credentials and payment destinations can be maintained from **Admin → Settings** after the migration. `.env` values remain safe fallbacks. Never commit `.env`, API keys, payment credentials or wallet secrets.
+After the app migration is complete, AI credentials and the BEP20 wallet can be maintained from Admin → Settings.
 
 ## Admin control center
 
@@ -102,45 +127,34 @@ Payment verification:
 /admin/payments
 ```
 
-### Admin settings
-
-Authorized administrators can manage:
-
-- Primary AI provider: Gemini, Groq or OpenAI.
-- Gemini, Groq and OpenAI model names.
-- Gemini, Groq and OpenAI API keys.
-- BEP20 USDT receiving wallet.
-- BEP20 network (BSC).
-
-API keys are encrypted at rest using Laravel application encryption and are never displayed back in plaintext. Leaving an existing API-key field blank keeps the saved secret unchanged.
-
-The payment checkout reads the admin-managed BEP20 wallet/network at request time, so changing the receiving wallet does not require editing application code or the checkout template.
+Admin authorization is based on the server-side admin email allowlist. Admin passwords are never committed to GitHub.
 
 ## Billing and BEP20 USDT payments
 
-The subscription foundation provides Free, Starter, Pro and Agency plans. Paid checkout uses **BEP20 USDT on BNB Smart Chain only**.
+Paid checkout uses **BEP20 USDT on BNB Smart Chain only**.
 
-Payment flow:
+Flow:
 
 1. User selects a paid plan.
-2. GigRanker displays the current admin-configured USDT amount and receiving BEP20 wallet.
+2. GigRanker reads the current admin-configured wallet and displays the USDT amount.
 3. User sends USDT on BSC/BEP20.
 4. User submits the blockchain TXID.
 5. Payment remains `pending`.
 6. Authorized admin verifies the transaction.
-7. Only after approval is the paid subscription activated.
+7. Subscription activates only after approval.
 
 The current application records the submitted TXID for administrator verification. It does **not** claim automatic on-chain verification.
 
 ## Security
 
 - Never commit `.env` or secrets.
-- Keep AI and payment credentials server-side.
 - Admin-managed API keys are encrypted at rest.
+- Runtime AI credentials are loaded from encrypted settings when available.
+- Payment wallet is loaded from admin settings at checkout time.
 - Validate and authorize admin settings and payment actions.
 - Rate-limit authentication, generation, payment and settings endpoints.
 - Never activate paid subscriptions from a client-side payment claim alone.
-- Before approval, verify the BEP20 network, receiving address, USDT token, amount and transaction status.
+- Verify the BEP20 network, receiving address, USDT token, amount and transaction status before payment approval.
 
 ## Database and health check
 
@@ -168,18 +182,17 @@ configuration   ok
 3. Login
 4. Dashboard
 5. Project creation
-6. AI generation with configured provider credentials
-7. Logout/login session lifecycle
-8. Free → paid plan selection
-9. BEP20 USDT payment instructions
-10. TXID submission
-11. Admin login
-12. Admin dashboard
-13. Admin settings update and encrypted key storage
-14. Admin payment approve/reject
-15. Subscription activation after approval
-16. Mobile/responsive view
-17. Production health check
+6. Admin Settings → save AI provider/key/model
+7. AI generation using the saved Admin Settings key
+8. Logout/login session lifecycle
+9. Free → paid plan selection
+10. Admin Settings → update BEP20 wallet
+11. BEP20 USDT payment instructions show the updated wallet
+12. TXID submission
+13. Admin payment approve/reject
+14. Subscription activation after approval
+15. Mobile/responsive view
+16. Production health check
 
 ## Repository
 
