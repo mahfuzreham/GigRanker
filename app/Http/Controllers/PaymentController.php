@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
+use App\Services\AppSettings;
 use App\Services\Billing\PlanCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,7 +15,7 @@ use Illuminate\View\View;
 
 class PaymentController extends Controller
 {
-    public function create(Request $request): View|RedirectResponse
+    public function create(Request $request, AppSettings $settings): View|RedirectResponse
     {
         $planKey = (string) $request->query('plan', 'starter');
         $plan = PlanCatalog::get($planKey);
@@ -26,8 +27,8 @@ class PaymentController extends Controller
         return view('billing.payment', [
             'planKey' => $planKey,
             'plan' => $plan,
-            'paymentAddress' => config('gigranker.payments.bep20_address'),
-            'bep20Network' => config('gigranker.payments.bep20_network', 'BSC'),
+            'paymentAddress' => $settings->get('bep20_address', config('gigranker.payments.bep20_address')),
+            'bep20Network' => $settings->get('bep20_network', config('gigranker.payments.bep20_network', 'BSC')),
         ]);
     }
 
@@ -42,10 +43,7 @@ class PaymentController extends Controller
         $plan = PlanCatalog::get($validated['plan']);
         abort_unless($plan !== null && $plan['price'] > 0, 422);
 
-        if (Payment::query()
-            ->where('method', 'bep20')
-            ->where('transaction_reference', $validated['transaction_reference'])
-            ->exists()) {
+        if (Payment::query()->where('method', 'bep20')->where('transaction_reference', $validated['transaction_reference'])->exists()) {
             return back()->withErrors(['transaction_reference' => 'This transaction reference has already been submitted.']);
         }
 
