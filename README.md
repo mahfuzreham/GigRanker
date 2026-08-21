@@ -14,6 +14,12 @@ Turn a freelance gig into an SEO-focused marketing website with AI-assisted cont
 - Blade + Tailwind CSS
 - Composer 2.x
 
+## UI / UX
+
+The current application uses a clean white, responsive UI for both user and administrator areas. Shared navigation, cards, forms, tables, alerts, buttons and authentication screens use the same light visual system.
+
+Admin UI includes a dedicated white admin sign-in screen, responsive control-center dashboard, SaaS plan overview, platform metrics, recent orders and payment-verification navigation. User UI includes a responsive dashboard, project list, AI credit indicator, project actions and mobile-friendly tables.
+
 ## cPanel deployment
 
 Production path:
@@ -138,7 +144,7 @@ AI provider credentials and mail settings must also remain server-side. Never co
 
 ## Admin control center
 
-GigRanker now has a dedicated admin entry point and protected control center.
+GigRanker has a dedicated admin entry point and protected control center.
 
 Admin login:
 
@@ -158,7 +164,7 @@ Payment verification:
 /admin/payments
 ```
 
-Admin authorization is based on the server-side `ADMIN_EMAILS` / `ADMIN_EMAIL` allowlist. The dedicated admin login still uses the authorized user's normal account password; no admin password is committed to GitHub.
+Admin authorization is based on the server-side `ADMIN_EMAILS` / `ADMIN_EMAIL` allowlist. The dedicated admin login uses the authorized user's account password; no admin password is committed to GitHub.
 
 ### First-time admin setup
 
@@ -185,8 +191,6 @@ php artisan optimize
 4. Open `/admin/login` and sign in with that account's existing password.
 
 The admin dashboard provides SaaS overview metrics, plan information, recent orders and a direct link to payment verification. Payment approval/rejection remains protected by the same server-side admin allowlist.
-
-Do not put an admin password, API key or other secret into GitHub or README files.
 
 ## PHP / extension checklist
 
