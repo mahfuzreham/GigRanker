@@ -31,14 +31,25 @@ final class AdminSettingsController extends Controller
             'gemini_api_key' => ['nullable', 'string', 'max:500'],
             'groq_api_key' => ['nullable', 'string', 'max:500'],
             'openai_api_key' => ['nullable', 'string', 'max:500'],
+            'site_name' => ['required', 'string', 'max:100'],
+            'site_tagline' => ['required', 'string', 'max:180'],
+            'hero_kicker' => ['required', 'string', 'max:120'],
+            'hero_title' => ['required', 'string', 'max:220'],
+            'hero_description' => ['required', 'string', 'max:500'],
+            'hero_primary_text' => ['required', 'string', 'max:60'],
+            'hero_secondary_text' => ['required', 'string', 'max:60'],
+            'features_title' => ['required', 'string', 'max:160'],
+            'features_description' => ['required', 'string', 'max:300'],
+            'how_title' => ['required', 'string', 'max:160'],
+            'how_description' => ['required', 'string', 'max:300'],
+            'cta_title' => ['required', 'string', 'max:160'],
+            'cta_description' => ['required', 'string', 'max:400'],
+            'footer_text' => ['required', 'string', 'max:200'],
         ]);
 
-        $settings->put('ai_provider', $data['ai_provider']);
-        $settings->put('gemini_model', $data['gemini_model']);
-        $settings->put('groq_model', $data['groq_model']);
-        $settings->put('openai_model', $data['openai_model']);
-        $settings->put('bep20_address', $data['bep20_address']);
-        $settings->put('bep20_network', $data['bep20_network']);
+        foreach (['ai_provider','gemini_model','groq_model','openai_model','bep20_address','bep20_network','site_name','site_tagline','hero_kicker','hero_title','hero_description','hero_primary_text','hero_secondary_text','features_title','features_description','how_title','how_description','cta_title','cta_description','footer_text'] as $key) {
+            $settings->put($key, $data[$key]);
+        }
 
         foreach (['gemini_api_key', 'groq_api_key', 'openai_api_key'] as $key) {
             if (!empty($data[$key])) {
@@ -46,7 +57,7 @@ final class AdminSettingsController extends Controller
             }
         }
 
-        return back()->with('success', 'Settings saved securely. API keys are encrypted at rest.');
+        return back()->with('success', 'Settings saved. Homepage content, AI configuration and USDT settings are now live.');
     }
 
     private function ensureAdmin(Request $request): void
