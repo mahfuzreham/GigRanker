@@ -31,6 +31,25 @@ final class AppSettings
             'gemini_key_set' => $this->get('gemini_api_key') !== null,
             'groq_key_set' => $this->get('groq_api_key') !== null,
             'openai_key_set' => $this->get('openai_api_key') !== null,
+            'site_name' => $this->get('site_name', 'GigRanker'),
+            'site_tagline' => $this->get('site_tagline', 'AI-powered growth for your freelance gig.'),
+            'hero_kicker' => $this->get('hero_kicker', 'AI-powered freelance growth platform'),
+            'hero_title' => $this->get('hero_title', 'Turn your gig into a search-ready website.'),
+            'hero_description' => $this->get('hero_description', 'Build SEO-focused pages, content and conversion paths around your freelance services.'),
+            'hero_primary_text' => $this->get('hero_primary_text', 'Start Building Free'),
+            'hero_secondary_text' => $this->get('hero_secondary_text', 'View Plans'),
+            'features_title' => $this->get('features_title', 'Everything you need to market one gig'),
+            'features_description' => $this->get('features_description', 'Create, optimize and publish your gig marketing assets from one workspace.'),
+            'how_title' => $this->get('how_title', 'How GigRanker works'),
+            'how_description' => $this->get('how_description', 'Create a project, generate your content and publish your marketing website.'),
+            'cta_title' => $this->get('cta_title', 'Ready to grow your gig?'),
+            'cta_description' => $this->get('cta_description', 'Create your first project and turn your freelance service into a focused SEO marketing asset.'),
+            'footer_text' => $this->get('footer_text', '© '.date('Y').' GigRanker. All rights reserved.'),
         ];
+    }
+
+    public function home(): array
+    {
+        return $this->allForAdmin();
     }
 }
