@@ -27,8 +27,7 @@ class PaymentController extends Controller
             'planKey' => $planKey,
             'plan' => $plan,
             'paymentAddress' => config('gigranker.payments.bep20_address'),
-            'bkashNumber' => config('gigranker.payments.bkash_number'),
-            'bep20Network' => config('gigranker.payments.bep20_network'),
+            'bep20Network' => config('gigranker.payments.bep20_network', 'BSC'),
         ]);
     }
 
@@ -36,7 +35,7 @@ class PaymentController extends Controller
     {
         $validated = $request->validate([
             'plan' => ['required', 'string', 'in:starter,pro,agency'],
-            'method' => ['required', 'string', 'in:bkash,bep20'],
+            'method' => ['required', 'string', 'in:bep20'],
             'transaction_reference' => ['required', 'string', 'min:6', 'max:120'],
         ]);
 
@@ -44,7 +43,7 @@ class PaymentController extends Controller
         abort_unless($plan !== null && $plan['price'] > 0, 422);
 
         if (Payment::query()
-            ->where('method', $validated['method'])
+            ->where('method', 'bep20')
             ->where('transaction_reference', $validated['transaction_reference'])
             ->exists()) {
             return back()->withErrors(['transaction_reference' => 'This transaction reference has already been submitted.']);
@@ -53,15 +52,15 @@ class PaymentController extends Controller
         Payment::create([
             'user_id' => Auth::id(),
             'plan' => $validated['plan'],
-            'method' => $validated['method'],
+            'method' => 'bep20',
             'status' => 'pending',
             'amount' => $plan['price'],
-            'currency' => $plan['currency'],
+            'currency' => 'USDT',
             'merchant_reference' => 'GR-'.strtoupper(Str::random(20)),
             'transaction_reference' => $validated['transaction_reference'],
             'paid_at' => null,
         ]);
 
-        return redirect()->route('billing.plans')->with('success', 'Payment submitted for verification. Your paid plan activates only after verification.');
+        return redirect()->route('billing.plans')->with('success', 'USDT payment submitted for verification. Your paid plan activates after the transaction is verified by an authorized administrator.');
     }
 }
