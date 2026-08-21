@@ -1,107 +1,81 @@
 # GigRanker
 
 **Version: 1.0**  
-**Status: Production Candidate — Live testing by administrator**
+**Status: Production Candidate — live testing**
 
-**Turn Your Freelance Gig Into an SEO Marketing Website.**
+Turn a freelance gig into an SEO-focused marketing website with AI-assisted content generation, project pages, blogs, SEO metadata, schema markup, sitemap/robots output, outbound click tracking, subscriptions, payment intake, deployment history, backups, rollback and production health checks.
 
-## 🚀 cPanel Terminal — Deploy / Update from GitHub
+## Stack
 
-Use the following commands in **cPanel Terminal** to download the complete GigRanker code from GitHub and deploy/update the application. Repository: `mahfuzreham/GigRanker`.
+- Laravel 12
+- PHP 8.2+
+- Recommended cPanel PHP: 8.3.x
+- MySQL/MariaDB
+- Blade + Tailwind CSS
+- Composer 2.x
 
-### Version 1 deployment
+## cPanel deployment
 
-This README currently documents **GigRanker v1.0**. Keep the production deployment on the `main` branch for the v1 line unless a newer version is explicitly released.
+Production path:
 
-### First deployment — empty `public_html`
+```text
+/home/gigranker/public_html
+```
 
-If `/home/gigranker/public_html` is empty, clone the `main` branch directly:
+The repository keeps the Laravel application root in `public_html` while the web entry point is `public/`. The repository now includes both root and `public/.htaccess` rules for cPanel deployments where the domain document root cannot be changed to `public/`.
+
+### Fresh deployment
 
 ```bash
 cd /home/gigranker
 rm -rf /tmp/GigRanker-deploy
-
 git clone --branch main --single-branch https://github.com/mahfuzreham/GigRanker.git /tmp/GigRanker-deploy
-
 cp -a /tmp/GigRanker-deploy/. /home/gigranker/public_html/
-cd /home/gigranker/public_html
 rm -rf /tmp/GigRanker-deploy
-```
-
-Then install dependencies and prepare Laravel:
-
-```bash
 cd /home/gigranker/public_html
 
 composer install --no-dev --optimize-autoloader --no-interaction
-
-# Create .env only if it does not already exist.
 [ -f .env ] || cp .env.example .env
-
 php artisan key:generate --force
 php artisan storage:link
-php artisan optimize:clear
 php artisan migrate --force
+php artisan optimize:clear
 php artisan optimize
 ```
 
-> **Important:** Never run `cp .env.example .env` over an existing production `.env`. Keep real database, mail, AI and payment credentials only in `.env` and never commit them to Git.
+Never overwrite an existing production `.env` with `.env.example`.
 
-### Existing installation — update to latest `main`
-
-For an existing Git checkout:
+### Existing deployment update
 
 ```bash
 cd /home/gigranker/public_html
-
 git fetch origin main
 git checkout main
 git pull --ff-only origin main
-
 composer install --no-dev --optimize-autoloader --no-interaction
-php artisan optimize:clear
 php artisan migrate --force
 php artisan storage:link
+php artisan optimize:clear
 php artisan optimize
 ```
 
-Before updating production, create a backup and check the working tree:
+Do not use `git reset --hard` on production unless local changes are intentionally being discarded.
 
-```bash
-cd /home/gigranker/public_html
+## cPanel web routing
 
-git status --short
-php artisan gigranker:backup create --environment=production
-php artisan gigranker:health --json
+If the domain document root is `/home/gigranker/public_html`, the repository root `.htaccess` routes requests into Laravel's `public/` directory and disables directory indexing. `public/.htaccess` sends non-file/non-directory requests to `public/index.php`.
+
+Preferred configuration, when cPanel allows it, is still:
+
+```text
+Document Root: /home/gigranker/public_html/public
 ```
 
-Do **not** use `git reset --hard` on production unless you intentionally want to discard local/uncommitted files. The normal update command uses `git pull --ff-only` to avoid silently overwriting local changes.
+Do not type Apache `RewriteRule` directives directly into Terminal; they belong inside `.htaccess` files.
 
-### If `public_html` is not currently a Git checkout
+## Production environment
 
-If the existing application was uploaded manually and you want Git tracking without deleting the current `.env`, initialize the repository carefully:
-
-```bash
-cd /home/gigranker/public_html
-
-git init
-git remote add origin https://github.com/mahfuzreham/GigRanker.git
-git fetch origin main
-git checkout -B main origin/main
-```
-
-If Git reports local files would be overwritten, **stop and back up the current directory first**. Do not force-reset until you have confirmed that all required production files are backed up.
-
-### Production environment after code download
-
-Edit the production environment file:
-
-```bash
-cd /home/gigranker/public_html
-nano .env
-```
-
-At minimum, configure:
+Configure `.env` on the server only:
 
 ```env
 APP_ENV=production
@@ -123,12 +97,31 @@ BEP20_USDT_ADDRESS=your-bep20-usdt-address
 BEP20_NETWORK=BSC
 ```
 
-Also configure the selected mail and AI provider credentials in `.env`. **Never paste real secrets into GitHub, README, issues or commits.**
+AI provider credentials and mail settings must also remain server-side. Never commit `.env`, API keys, payment credentials or wallet secrets.
 
-### Verify the cPanel PHP environment
+## PHP / extension checklist
+
+Required/expected extensions include:
+
+- `bcmath`
+- `ctype`
+- `curl`
+- `dom`
+- `fileinfo`
+- `mbstring`
+- `openssl`
+- `pdo`
+- `pdo_mysql`
+- `session`
+- `tokenizer`
+- `xml`
+- `zip`
+
+`zip` / `ZipArchive` is required for ZIP/static-site export. `intl`, `opcache` and `redis` are recommended/optional depending on deployment configuration.
+
+Verify the environment:
 
 ```bash
-cd /home/gigranker/public_html
 php -v
 php -m | sort
 composer --version
@@ -137,237 +130,42 @@ php -r 'echo class_exists("ZipArchive") ? "ZipArchive: OK\n" : "ZipArchive: MISS
 php -r 'echo extension_loaded("pdo_mysql") ? "pdo_mysql: OK\n" : "pdo_mysql: MISSING\n";'
 ```
 
-Recommended production PHP: **PHP 8.3.x**, provided the cPanel host has the required packages/extensions available.
+## Database and health check
 
-### Final live test
-
-After configuration and migrations:
+After configuring the database:
 
 ```bash
-cd /home/gigranker/public_html
-php artisan gigranker:health
+php artisan migrate --force
+php artisan optimize:clear
+php artisan optimize
 php artisan gigranker:health --json
-php artisan route:list --except-vendor
 ```
 
-If the health check returns failure, **do not consider production ready** until the failing check is fixed.
+The production health command checks application configuration, database connectivity, cache read/write, storage and required configuration. A failed health check exits non-zero and production should not be considered ready until it passes.
 
-### Laravel scheduler cron on cPanel
+Expected healthy result:
 
-Add this cron job in cPanel:
+```text
+application     ok
+database        ok
+cache           ok
+storage         ok
+configuration   ok
+```
+
+## Scheduler / recurring health check
+
+Add this cPanel cron:
 
 ```cron
 * * * * * cd /home/gigranker/public_html && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-This runs the application's scheduled tasks, including the production health check scheduled for the 1st and 16th of each month at 03:00.
-
----
-
-GigRanker is a planned Laravel SaaS platform for creating SEO-focused marketing websites around freelance service listings. Users provide their gig/service information, target market and branding; GigRanker generates structured SEO content, service pages, blog content, internal links, schema markup, sitemap/robots files and conversion-focused CTAs.
-
-## Product goals
-
-- Gig-focused SEO marketing websites
-- AI-assisted content generation
-- Structured JSON output + controlled HTML templates
-- Service pages and blog generation
-- SEO metadata, canonical URLs, Open Graph and Schema.org
-- Internal linking and sitemap generation
-- Live preview and ZIP export
-- Click tracking for outbound gig CTAs
-- Subscription and usage-credit system
-- bKash and BEP20 payment support
-- Admin-controlled AI providers and usage limits
-
-## Planned stack
-
-- Laravel 12 / PHP 8.2+
-- MySQL or MariaDB
-- Blade + Tailwind CSS
-- Queue workers for AI generation
-- Server-side AI provider abstraction
-- cPanel production deployment
-
-## PHP / cPanel server requirements
-
-GigRanker declares **PHP 8.2 or newer** in `composer.json`. For cPanel PHP Selector, **PHP 8.3.x is the recommended production choice** after verifying the host's Laravel/extension package availability. Keep the production PHP version aligned with the version validated by `composer install` and the application's CI/runtime checks.
-
-### PHP Selector checklist
-
-- [ ] PHP 8.2+ available
-- [ ] PHP 8.3.x selected/recommended for production
-- [ ] PHP-FPM enabled where available
-- [ ] Composer 2.x installed and working
-- [ ] MySQL/MariaDB database configured
-- [ ] Document root points to the Laravel `public/` directory or the cPanel deployment layout is configured correctly
-
-### Required PHP extensions
-
-Enable these extensions in cPanel PHP Selector / MultiPHP Manager:
-
-- [ ] `bcmath`
-- [ ] `ctype`
-- [ ] `curl`
-- [ ] `dom`
-- [ ] `fileinfo`
-- [ ] `filter`
-- [ ] `hash`
-- [ ] `mbstring`
-- [ ] `openssl`
-- [ ] `pcre`
-- [ ] `pdo`
-- [ ] `pdo_mysql`
-- [ ] `session`
-- [ ] `tokenizer`
-- [ ] `xml`
-- [ ] `zip` — required for GigRanker ZIP/static-site export (`ZipArchive`)
-
-### Recommended production extensions / features
-
-- [ ] `intl`
-- [ ] `opcache`
-- [ ] `redis` — optional, useful when Redis is selected for cache/queues
-
-### Verify PHP environment
-
-Run these commands on the production server after selecting the PHP version:
-
-```bash
-php -v
-php -m | sort
-php -r 'echo class_exists("ZipArchive") ? "ZipArchive: OK\n" : "ZipArchive: MISSING\n";'
-php -r 'echo extension_loaded("pdo_mysql") ? "pdo_mysql: OK\n" : "pdo_mysql: MISSING\n";'
-composer --version
-composer check-platform-reqs
-```
-
-Do not mark the server ready until `composer check-platform-reqs` passes and `ZipArchive` is available for the export feature.
-
-## Automated code quality / syntax checks
-
-Every push and pull request runs the GitHub Actions quality workflow against **PHP 8.2 and PHP 8.3**. It validates Composer configuration, installs dependencies, audits locked Composer dependencies, runs `php -l` against every tracked PHP source file, boots Laravel, checks routes and verifies the deployment/rollback/backup/health Artisan commands. It also executes `gigranker:health --json` in CI and runs application tests against an isolated SQLite in-memory database.
-
-The security workflow separately checks PHP syntax and scans tracked files for common hard-coded secret assignments. A production release should not proceed while either workflow is failing.
-
-## Bug-fix / validation status
-
-A full repository validation pass was performed after the deployment-readiness work. The quality workflow found and fixed real application issues, including:
-
-- Symfony/Laravel command method collision in `DeploymentLogCommand`.
-- Missing base HTTP `Controller` class.
-- Deployment command registration cleanup in Laravel bootstrap.
-- Missing Laravel framework cache/view/log directories in a clean checkout.
-- Missing PHPUnit bootstrap/configuration and smoke-test directories.
-- PHPUnit application bootstrap corrected so feature tests boot Laravel correctly.
-- Test isolation strengthened with SQLite and model factories.
-- Project ownership and Fiverr URL validation are now covered by feature tests.
-- CI now runs Composer vulnerability auditing.
-- Rollback execution now refuses to reset a dirty Git working tree, preventing accidental destruction of uncommitted production changes.
-- AI-generated duplicate page slugs are ignored so one generated page cannot silently overwrite another.
-- AI request JSON encoding is checked explicitly before sending the provider request.
-- Gemini and OpenAI-compatible providers now retry transient `408`, `429`, `500`, `502`, `503`, and `504` failures, while still failing fast on non-transient HTTP errors.
-- Static export now rejects unsafe/path-traversal page slugs before creating ZIP entries.
-- Export site URLs are restricted to HTTP/HTTPS and checked again at runtime.
-- ZIP entry names are validated before being written.
-- Exported HTML escapes AI/user content, and JSON-LD encoding now fails safely instead of producing invalid markup.
-- Export tests cover path traversal, HTML injection and invalid site URL handling.
-- Authentication normalizes email addresses before lookup and regenerates sessions after successful authentication.
-- Logout invalidates the session and regenerates the CSRF token.
-- Authentication, guest-access and session lifecycle flows are covered by feature tests.
-- The complete project flow is covered from project creation through AI generation, preview, ZIP export and outbound Fiverr click tracking.
-- Cross-user access to project generation, preview and export is explicitly tested.
-- Subscription plan architecture was rebuilt on top of the current `main` code instead of merging the stale conflicting branch.
-- Billing plans are validated server-side and paid plans remain inactive until a verified payment flow is implemented.
-- Subscription records, user plan state, authenticated billing routes and billing plan UI are covered by feature tests.
-- Paid checkout now creates a server-side pending payment ledger entry for bKash or BEP20 submissions.
-- Payment transaction references are protected against duplicate reuse.
-- Payment destinations are configured through server-side environment variables and are never accepted from the browser.
-- Payment intake tests verify that submitted payments remain pending and cannot activate a paid plan by themselves.
-- Admin payment verification now uses a server-side email allowlist and never trusts a client-supplied admin flag.
-- Payment approval is transactional and row-locked; a reviewed payment cannot be approved or rejected again.
-- Approved payments activate the selected paid subscription, add the plan's AI credits and record the credit transaction atomically.
-- Rejected payments remain inactive and retain a reviewer audit reference.
-- Payment review tests cover non-admin denial, approval, rejection and repeated-approval idempotency.
-- The production health command is executed directly in the PHP 8.2/8.3 quality matrix so command registration and runtime health-check wiring are continuously validated.
-
-AI provider resilience is covered by automated tests for retrying rate-limit and temporary-server responses. The end-to-end project flow uses a fake AI provider in tests, so CI never requires real AI credentials.
-
-The latest quality workflow is required to pass on **PHP 8.2 and PHP 8.3**, including Composer validation, dependency auditing, PHP syntax checks, Laravel boot/route checks, Artisan command discovery, the production health command and application tests.
-
-## Billing / subscription plans
-
-The current subscription foundation provides four plans:
-
-| Plan | Price | AI credits | Projects | SEO pages |
-|---|---:|---:|---:|---:|
-| Free | $0 | 10 | 1 | 3 |
-| Starter | $5/month | 50 | 3 | 20 |
-| Pro | $15/month | 200 | 10 | 100 |
-| Agency | $39/month | 500 | 50 | 500 |
-
-Authenticated users can view plans at `/billing/plans`. Selecting **Free** updates the user's plan. Paid selections open `/billing/payment`, where users select bKash or BEP20 and submit a transaction ID/TXID. The submission is stored as `pending`; it does not activate the paid plan until an authorized administrator approves it.
-
-### Payment configuration
-
-Set these values only in the production `.env` file:
-
-```env
-BKASH_NUMBER=your-bkash-number
-BEP20_USDT_ADDRESS=your-bep20-usdt-address
-BEP20_NETWORK=BSC
-ADMIN_EMAILS=admin@example.com,another-admin@example.com
-```
-
-`ADMIN_EMAILS` is the allowlist for the built-in payment review screen. `ADMIN_EMAIL` is accepted as a backwards-compatible single-admin fallback.
-
-Never commit real payment numbers, wallet addresses, API keys or provider credentials to Git.
-
-### Admin payment verification
-
-Authorized administrators can review pending payments at:
-
-```text
-/admin/payments
-```
-
-Available actions:
-
-- **Approve & Activate** — marks the payment approved, activates the paid plan for one month, adds the plan's AI credits, expires any previous active subscription and records the credit/payment audit data in one database transaction.
-- **Reject** — marks the payment rejected without changing the user's plan or credits.
-
-The server checks the authenticated user's normalized email against `ADMIN_EMAILS`. A client cannot grant itself admin access. Payment rows are locked during review, and only `pending` payments may be processed, preventing double-credit/double-subscription activation.
-
-The approval flow does **not** perform automatic bKash or blockchain verification. An administrator/provider must independently verify the submitted transaction before approving it.
-
-## Security principles
-
-- Never commit `.env` or API secrets.
-- AI/API credentials stay server-side.
-- Payment secrets stay server-side.
-- Validate and authorize every project/resource request.
-- Rate-limit generation and authentication endpoints.
-- Rate-limit payment submission and admin review endpoints.
-- Treat AI output as untrusted data.
-- Sanitize generated HTML before preview/export where applicable.
-- Normalize authentication identifiers before lookup.
-- Regenerate the session after authentication and invalidate it on logout.
-- Never activate a paid subscription from a client-side payment claim alone.
-- Keep dependencies updated and run security checks before production releases.
-
-## Deployment target
-
-Production cPanel account: `gigranker`
-
-Production path: `/home/gigranker/public_html`
-
-Repository: `mahfuzreham/GigRanker`
+The application schedules the production health check for 03:00 on the 1st and 16th of each month and can notify `ADMIN_EMAIL` on failure.
 
 ## Deployment history / logging
 
-GigRanker records deployment lifecycle events in the `deployments` table. Each record includes a UUID, environment, release version, Git commit SHA, status, start/finish timestamps, duration, trigger/source information, message and optional metadata.
-
-Use the deployment logger command from cPanel deployment scripts, CI jobs or administrators:
+Deployment lifecycle events are stored in the `deployments` table.
 
 ```bash
 php artisan gigranker:deployment start --environment=production --version=2026.08.16 --triggered-by=github-actions --source=main
@@ -378,61 +176,101 @@ php artisan gigranker:deployment list
 
 ## Rollback
 
-Rollback targets must reference a previously successful deployment. By default the command only validates the target and creates an audit record; it does not modify the working tree.
+Validate a previous successful deployment:
 
 ```bash
 php artisan gigranker:rollback <deployment-uuid>
 ```
 
-To execute the code rollback on a Git working tree, an explicit confirmation is required:
+Execute an explicit code rollback only with confirmation:
 
 ```bash
 php artisan gigranker:rollback <deployment-uuid> --execute --yes
 ```
 
-The rollback service fetches repository refs, verifies the target commit, refuses to operate on a dirty working tree, and resets the working tree to that commit. It records the rollback as a new deployment-history entry, including the previous and resulting commit SHA. **Database migrations are never reversed automatically**; schema rollback must be handled separately and deliberately.
+Rollback refuses a dirty Git working tree and records the rollback in deployment history. Database migrations are not automatically reversed.
 
 ## Pre-deployment backups
 
-Before a production deployment, create a database backup and associate it with the deployment record. Backups are stored under Laravel's local storage disk and are tracked in the `deployment_backups` table with status, path, size, duration and SHA-256 checksum.
+Create and list production backups:
 
 ```bash
 php artisan gigranker:backup create --deployment=<deployment-uuid> --environment=production
 php artisan gigranker:backup list
 ```
 
-The automated backup currently supports a configured MySQL database. A failed backup returns a non-zero command exit code so a deployment script can stop before changing production. Backup files and the application storage location must be protected with appropriate server permissions and retention policies.
+Backups are tracked with status, path, size, duration and SHA-256 checksum. A failed backup returns a non-zero exit code so deployment automation can stop before changing production.
 
-## Production health checks
+## Billing and payments
 
-Run the production readiness check before and after deployments:
+The subscription foundation provides Free, Starter, Pro and Agency plans. Paid checkout supports bKash and BEP20 payment submission. Payment submissions remain `pending` until an authorized administrator verifies them.
 
-```bash
-php artisan gigranker:health
-php artisan gigranker:health --json
-php artisan gigranker:health --json --notify-admin
+Admin payment review:
+
+```text
+/admin/payments
 ```
 
-The check verifies production-safe application configuration, database connectivity, cache read/write, local storage read/write and required core configuration. A failed check exits non-zero. With `--notify-admin`, failures are emailed to `ADMIN_EMAIL`.
+`ADMIN_EMAILS` is the server-side allowlist. Client input cannot grant admin access. Approval is transactional and activates the selected paid plan/credits only after manual verification.
 
-### Automatic 15-day check
+Automatic bKash/provider or on-chain verification is not claimed.
 
-Production health checks are scheduled for **03:00 on the 1st and 16th of every month** (roughly a 15-day recurring cadence). The scheduler runs `gigranker:health --json --notify-admin` and prevents overlapping runs.
+## Security
 
-On cPanel, the Laravel scheduler still needs the standard cron entry:
+- Never commit `.env` or secrets.
+- Keep AI and payment credentials server-side.
+- Validate and authorize project/resource requests.
+- Rate-limit authentication, generation and payment endpoints.
+- Treat AI output as untrusted data.
+- Escape/sanitize generated content before preview/export.
+- Normalize authentication identifiers and regenerate sessions after login.
+- Invalidate sessions and regenerate CSRF tokens on logout.
+- Never activate paid subscriptions from a client-side payment claim alone.
+- Keep dependencies updated and run security checks before production releases.
 
-```cron
-* * * * * cd /home/gigranker/public_html && php artisan schedule:run >> /dev/null 2>&1
+## Quality / validation
+
+The repository includes automated PHP/Laravel validation, syntax checks, Composer validation/security auditing, application tests, deployment/rollback/backup/health command checks and PHP 8.2/8.3 CI coverage.
+
+## Current production validation
+
+The cPanel deployment was validated with:
+
+- PHP 8.3.30
+- Composer 2.10.2
+- MySQL database connection
+- All current migrations applied
+- Database cache tables applied
+- `php artisan optimize:clear` successful
+- `php artisan optimize` successful
+- `php artisan gigranker:health --json` successful
+
+The latest production health result reported `application`, `database`, `cache`, `storage` and `configuration` as `ok`.
+
+## Live functional test checklist
+
+Before public launch, test on the actual production domain:
+
+1. Homepage
+2. Registration
+3. Login
+4. Dashboard
+5. Project creation
+6. AI generation with configured provider credentials
+7. Logout/login session lifecycle
+8. Deployment and backup section
+9. Authorized admin functions
+10. Mobile/responsive view
+
+## Repository
+
+```text
+mahfuzreham/GigRanker
 ```
 
-Set the production `.env` value:
+Production account/path:
 
-```env
-ADMIN_EMAIL=your-admin@example.com
+```text
+cPanel account: gigranker
+/home/gigranker/public_html
 ```
-
-The server must also have a working Laravel mail configuration for alert delivery.
-
-## Status
-
-**GigRanker v1.0** includes deployment history/logging, safe rollback, pre-deployment database backups, production health checks, admin failure alerts, the recurring health-check schedule, PHP/cPanel requirements, automated syntax/quality checks, security auditing, isolated feature testing, complete project-flow testing, the subscription foundation, secure payment intake and admin payment verification. The quality workflow executes the production health command on PHP 8.2 and PHP 8.3. Payment verification remains a manual trust step; automatic bKash/provider or on-chain verification is not claimed. Production should still be validated on the actual cPanel server with real environment credentials before public launch.
