@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Console\Commands\CreateAdminUser;
 use App\Console\Commands\DeploymentBackupCommand;
 use App\Console\Commands\DeploymentLogCommand;
 use App\Console\Commands\DeploymentRollbackCommand;
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withCommands([
+        CreateAdminUser::class,
         DeploymentLogCommand::class,
         DeploymentRollbackCommand::class,
         DeploymentBackupCommand::class,
