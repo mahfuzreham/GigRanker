@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminPaymentController;
+use App\Http\Controllers\AdminSettingsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\PaymentController;
@@ -35,6 +36,8 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/billing/payment', [PaymentController::class, 'store'])->middleware('throttle:5,10')->name('payments.store');
 
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard');
+    Route::get('/admin/settings', [AdminSettingsController::class, 'edit'])->name('admin.settings');
+    Route::post('/admin/settings', [AdminSettingsController::class, 'update'])->middleware('throttle:10,1')->name('admin.settings.update');
     Route::get('/admin/payments', [AdminPaymentController::class, 'index'])->name('admin.payments.index');
     Route::post('/admin/payments/{payment}/approve', [AdminPaymentController::class, 'approve'])->middleware('throttle:30,1')->name('admin.payments.approve');
     Route::post('/admin/payments/{payment}/reject', [AdminPaymentController::class, 'reject'])->middleware('throttle:30,1')->name('admin.payments.reject');
