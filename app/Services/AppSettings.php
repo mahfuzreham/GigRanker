@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\AppSetting;
+use App\Models\HomepageSection;
 
 final class AppSettings
 {
@@ -50,6 +51,15 @@ final class AppSettings
 
     public function home(): array
     {
-        return $this->allForAdmin();
+        $settings = $this->allForAdmin();
+        $sections = HomepageSection::query()->where('is_active', true)->orderBy('sort_order')->get();
+        $settings['cms'] = [
+            'features' => $sections->where('type', 'features')->values()->all(),
+            'plans' => $sections->where('type', 'plans')->values()->all(),
+            'faq' => $sections->where('type', 'faq')->values()->all(),
+            'testimonials' => $sections->where('type', 'testimonials')->values()->all(),
+            'footer_links' => $sections->where('type', 'footer_links')->values()->all(),
+        ];
+        return $settings;
     }
 }
