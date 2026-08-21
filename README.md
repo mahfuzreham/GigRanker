@@ -9,11 +9,10 @@ Turn a freelance gig into an SEO-focused marketing website with AI-assisted cont
 
 - Clean white, responsive SaaS interface across public, user and admin areas.
 - Conversion-focused homepage with features, workflow, plans and payment messaging.
-- Paid checkout now accepts **BEP20 USDT only**.
-- bKash is no longer accepted as a payment method.
+- Paid checkout accepts **BEP20 USDT only**.
 - Users submit the blockchain TXID after sending the exact USDT amount.
 - Paid subscriptions remain pending until an authorized administrator verifies the payment.
-- Configure the receiving wallet with `BEP20_USDT_ADDRESS` and network with `BEP20_NETWORK=BSC`.
+- The receiving BEP20 wallet and network can now be managed from the admin settings screen; `.env` remains the production fallback.
 
 ## Stack
 
@@ -58,7 +57,7 @@ Never overwrite the production `.env` with `.env.example` and never commit secre
 
 ## Production environment
 
-Configure `.env` on the server only:
+Configure `.env` on the server only for infrastructure/bootstrap values:
 
 ```env
 APP_ENV=production
@@ -73,12 +72,9 @@ DB_USERNAME=your_database_user
 DB_PASSWORD=your_database_password
 
 ADMIN_EMAILS=your-admin@example.com
-
-BEP20_USDT_ADDRESS=your-bep20-usdt-address
-BEP20_NETWORK=BSC
 ```
 
-AI provider credentials and mail settings must remain server-side. Never commit `.env`, API keys, payment credentials or wallet secrets.
+AI credentials and payment destinations can be maintained from **Admin → Settings** after the migration. `.env` values remain safe fallbacks. Never commit `.env`, API keys, payment credentials or wallet secrets.
 
 ## Admin control center
 
@@ -94,29 +90,40 @@ Admin dashboard:
 /admin
 ```
 
+Admin settings:
+
+```text
+/admin/settings
+```
+
 Payment verification:
 
 ```text
 /admin/payments
 ```
 
-Admin authorization is based on the server-side `ADMIN_EMAILS` / `ADMIN_EMAIL` allowlist. The admin password is never committed to GitHub.
+### Admin settings
+
+Authorized administrators can manage:
+
+- Primary AI provider: Gemini, Groq or OpenAI.
+- Gemini, Groq and OpenAI model names.
+- Gemini, Groq and OpenAI API keys.
+- BEP20 USDT receiving wallet.
+- BEP20 network (BSC).
+
+API keys are encrypted at rest using Laravel application encryption and are never displayed back in plaintext. Leaving an existing API-key field blank keeps the saved secret unchanged.
+
+The payment checkout reads the admin-managed BEP20 wallet/network at request time, so changing the receiving wallet does not require editing application code or the checkout template.
 
 ## Billing and BEP20 USDT payments
 
 The subscription foundation provides Free, Starter, Pro and Agency plans. Paid checkout uses **BEP20 USDT on BNB Smart Chain only**.
 
-Required server configuration:
-
-```env
-BEP20_USDT_ADDRESS=0xYourReceivingWallet
-BEP20_NETWORK=BSC
-```
-
 Payment flow:
 
 1. User selects a paid plan.
-2. GigRanker displays the exact USDT amount and receiving BEP20 wallet.
+2. GigRanker displays the current admin-configured USDT amount and receiving BEP20 wallet.
 3. User sends USDT on BSC/BEP20.
 4. User submits the blockchain TXID.
 5. Payment remains `pending`.
@@ -129,8 +136,9 @@ The current application records the submitted TXID for administrator verificatio
 
 - Never commit `.env` or secrets.
 - Keep AI and payment credentials server-side.
-- Validate and authorize project/resource requests.
-- Rate-limit authentication, generation and payment endpoints.
+- Admin-managed API keys are encrypted at rest.
+- Validate and authorize admin settings and payment actions.
+- Rate-limit authentication, generation, payment and settings endpoints.
 - Never activate paid subscriptions from a client-side payment claim alone.
 - Before approval, verify the BEP20 network, receiving address, USDT token, amount and transaction status.
 
@@ -167,10 +175,11 @@ configuration   ok
 10. TXID submission
 11. Admin login
 12. Admin dashboard
-13. Admin payment approve/reject
-14. Subscription activation after approval
-15. Mobile/responsive view
-16. Production health check
+13. Admin settings update and encrypted key storage
+14. Admin payment approve/reject
+15. Subscription activation after approval
+16. Mobile/responsive view
+17. Production health check
 
 ## Repository
 
