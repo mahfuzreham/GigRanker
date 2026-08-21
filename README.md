@@ -22,7 +22,7 @@ Production path:
 /home/gigranker/public_html
 ```
 
-The repository keeps the Laravel application root in `public_html` while the web entry point is `public/`. The repository now includes both root and `public/.htaccess` rules for cPanel deployments where the domain document root cannot be changed to `public/`.
+The repository keeps the Laravel application root in `public_html` while the web entry point is `public/`. The repository includes root and `public/.htaccess` rules for cPanel deployments where the domain document root cannot be changed to `public/`.
 
 ### Fresh deployment
 
@@ -98,6 +98,30 @@ BEP20_NETWORK=BSC
 ```
 
 AI provider credentials and mail settings must also remain server-side. Never commit `.env`, API keys, payment credentials or wallet secrets.
+
+## Admin login
+
+GigRanker has a dedicated administrator login at:
+
+```text
+/admin/login
+```
+
+The administrator must use an account whose email is present in the server-side `ADMIN_EMAILS` allowlist. The normal `/login` remains available for regular users. Admin payment review is available at:
+
+```text
+/admin/payments
+```
+
+Create or reset an administrator from cPanel Terminal without storing a password in GitHub:
+
+```bash
+cd /home/gigranker/public_html
+php artisan gigranker:admin:create admin@example.com --password='CHANGE_THIS_TO_A_STRONG_PASSWORD'
+php artisan optimize:clear
+```
+
+The command creates or updates the user, adds the email to `ADMIN_EMAILS` in the server `.env`, and reports the admin login URL. Use a unique password of at least 12 characters and do not commit it to the repository.
 
 ## PHP / extension checklist
 
@@ -259,7 +283,7 @@ Before public launch, test on the actual production domain:
 6. AI generation with configured provider credentials
 7. Logout/login session lifecycle
 8. Deployment and backup section
-9. Authorized admin functions
+9. Dedicated admin login and authorized admin functions
 10. Mobile/responsive view
 
 ## Repository
