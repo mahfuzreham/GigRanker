@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminPaymentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
@@ -18,6 +19,11 @@ Route::middleware('guest')->group(function (): void {
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1')->name('register.store');
 });
+
+Route::get('/admin/login', [AdminAuthController::class, 'showLogin'])->name('admin.login');
+Route::post('/admin/login', [AdminAuthController::class, 'login'])
+    ->middleware('throttle:6,1')
+    ->name('admin.login.store');
 
 Route::get('/go/{project}', [WebsiteController::class, 'click'])
     ->whereNumber('project')
