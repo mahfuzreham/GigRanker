@@ -45,21 +45,58 @@ php artisan optimize
 
 Never overwrite an existing production `.env` with `.env.example`.
 
-### Existing deployment update
+### Existing deployment update — recommended
+
+Use this procedure whenever new code is pushed to GitHub `main`:
 
 ```bash
 cd /home/gigranker/public_html
+
+git status
 git fetch origin main
 git checkout main
 git pull --ff-only origin main
+
+export PATH="/home/gigranker/bin:$PATH"
 composer install --no-dev --optimize-autoloader --no-interaction
+
 php artisan migrate --force
 php artisan storage:link
 php artisan optimize:clear
 php artisan optimize
+php artisan gigranker:health --json
 ```
 
-Do not use `git reset --hard` on production unless local changes are intentionally being discarded.
+The final health check must report `application`, `database`, `cache`, `storage` and `configuration` as `ok` before considering the update production-ready.
+
+If `git status` shows intentional production changes, stop and review them before pulling. Do not overwrite `.env` or other server-only configuration.
+
+Do not use these destructive commands as a normal update method:
+
+```bash
+git reset --hard
+php artisan migrate:fresh
+rm -rf .env
+```
+
+`git reset --hard` can discard intentional production changes and `migrate:fresh` destroys database tables/data.
+
+### Account-local Composer
+
+On cPanel accounts where `composer` is not globally available, install Composer in the account's `bin` directory:
+
+```bash
+cd /home/gigranker
+mkdir -p bin
+cd bin
+curl -sS https://getcomposer.org/installer -o composer-setup.php
+php composer-setup.php --install-dir=/home/gigranker/bin --filename=composer
+rm composer-setup.php
+export PATH="/home/gigranker/bin:$PATH"
+composer --version
+```
+
+For the verified production setup, Composer 2.10.2 runs with PHP 8.3.30.
 
 ## cPanel web routing
 
