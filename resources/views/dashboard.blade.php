@@ -2,7 +2,7 @@
 
 @section('content')
 <div style="display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:25px;flex-wrap:wrap">
-    <div><h1 style="margin:0">Dashboard</h1><p class="muted">Manage your gig marketing projects.</p></div>
+    <div><span class="badge">Workspace</span><h1 style="margin:8px 0 2px">Dashboard</h1><p class="muted" style="margin:0">Manage your gig marketing projects and SEO generation.</p></div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <span class="card" style="padding:10px 14px;margin:0"><strong>{{ Auth::user()->ai_credits }}</strong> AI credits</span>
         <a class="btn" href="{{ route('projects.create') }}">+ New Project</a>
@@ -10,25 +10,32 @@
 </div>
 
 @if($errors->any())
-    <div class="card" style="border-color:#b42318;margin-bottom:18px">
+    <div class="card" style="border-color:#fecaca;background:#fff7f7;margin-bottom:18px">
+        <strong style="color:#991b1b">Something needs attention</strong>
         @foreach($errors->all() as $error)
-            <p style="margin:0 0 6px">{{ $error }}</p>
+            <p style="margin:6px 0 0;color:#991b1b">{{ $error }}</p>
         @endforeach
     </div>
 @endif
 
 @if(session('success'))
-    <div class="card" style="margin-bottom:18px">
-        {{ session('success') }}
-    </div>
+    <div class="alert">{{ session('success') }}</div>
 @endif
 
 <div class="card">
 @if($projects->isEmpty())
-    <h3>No projects yet</h3>
-    <p class="muted">Create your first project by adding your freelance gig information.</p>
-    <a class="btn" href="{{ route('projects.create') }}">Create First Project</a>
+    <div style="text-align:center;padding:28px 10px">
+        <span class="badge">Get started</span>
+        <h2 style="margin:12px 0 6px">Create your first project</h2>
+        <p class="muted">Add your freelance gig information and generate SEO-ready pages from one workspace.</p>
+        <a class="btn" href="{{ route('projects.create') }}">Create First Project</a>
+    </div>
 @else
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px;flex-wrap:wrap">
+        <div><h2 style="margin:0">Your Projects</h2><p class="muted" style="margin:3px 0 0">{{ $projects->count() }} project{{ $projects->count() === 1 ? '' : 's' }}</p></div>
+        <a class="btn secondary" href="{{ route('projects.create') }}">New Project</a>
+    </div>
+    <div style="overflow:auto">
     <table>
         <thead><tr><th>Project</th><th>Gig</th><th>Target</th><th>Pages</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody>
@@ -38,7 +45,7 @@
                 <td><a href="{{ $project->gig_url }}" target="_blank" rel="noopener noreferrer">{{ $project->gig_title ?: 'View gig' }}</a></td>
                 <td>{{ $project->target_country ?: '—' }}{{ $project->target_city ? ', '.$project->target_city : '' }}</td>
                 <td>{{ $project->pages_count }}</td>
-                <td>{{ ucfirst($project->status) }}</td>
+                <td><span class="badge">{{ ucfirst($project->status) }}</span></td>
                 <td>
                     <div style="display:flex;gap:8px;flex-wrap:wrap">
                         <form method="POST" action="{{ route('projects.generate', $project) }}">
@@ -56,7 +63,8 @@
         @endforeach
         </tbody>
     </table>
-    <p class="muted" style="margin-bottom:0">Generation costs 1 AI credit per requested SEO page. Failed generations are refunded. AI credentials are never exposed to the browser.</p>
+    </div>
+    <p class="muted" style="margin:16px 0 0">Generation costs 1 AI credit per requested SEO page. Failed generations are refunded. AI credentials are never exposed to the browser.</p>
 @endif
 </div>
 @endsection
