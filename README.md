@@ -5,17 +5,29 @@
 
 Turn a freelance gig into an SEO-focused marketing website with AI-assisted content generation, project pages, blogs, SEO metadata, schema markup, sitemap/robots output, outbound click tracking, subscriptions, **BEP20 USDT-only payment intake**, deployment history, backups, rollback and production health checks.
 
-## Latest Admin Settings update
+## Latest UI update — TailAdmin-inspired admin design
 
-The Admin Settings system is now connected to runtime AI generation and billing configuration.
+The supplied **TailAdmin Laravel** template was reviewed and its visual language was applied to GigRanker without replacing GigRanker's application structure or copying the template's unrelated demo pages.
 
-- Gemini, Groq and OpenAI API keys can be saved from Admin → Settings.
-- API keys are encrypted at rest with Laravel application encryption.
-- AI provider selection is read from the database at generation time.
-- AI model selection is read from the database at generation time.
-- BEP20 USDT receiving wallet and network are read from the database at checkout time.
-- `.env` remains the safe fallback for initial/bootstrap configuration.
-- No API key, wallet secret or password is committed to GitHub.
+Admin UI now includes:
+
+- Fixed white sidebar with grouped navigation.
+- Active route states and quick links.
+- Sticky top bar and admin identity badge.
+- Responsive mobile sidebar with overlay toggle.
+- TailAdmin-style spacing, borders, cards, badges and brand palette.
+- Responsive dashboard metric cards.
+- Cleaner SaaS plan and recent-order tables.
+- Redesigned payment verification table.
+- Redesigned AI / USDT settings screen.
+
+Admin layout:
+
+```text
+resources/views/layouts/admin.blade.php
+```
+
+The public/user application layout and functionality remain separate from the admin control-center layout.
 
 ## Admin Settings
 
@@ -25,19 +37,16 @@ The Admin Settings system is now connected to runtime AI generation and billing 
 
 Available controls:
 
-### AI
-
-- Primary provider: Gemini / Groq / OpenAI
-- Gemini API key + model
-- Groq API key + model
-- OpenAI API key + model
-
-### Payments
-
+- Primary AI provider: Gemini / Groq / OpenAI
+- Gemini, Groq and OpenAI API keys + models
 - BEP20 USDT receiving address
 - BSC / BEP20 network
 
-Existing secrets are masked. Leave an API-key field blank to keep the existing encrypted value.
+API keys are encrypted at rest. Leave an existing API-key field blank to keep the saved secret unchanged.
+
+## Billing
+
+Paid checkout accepts **BEP20 USDT only**. The checkout reads the current admin-managed receiving wallet at request time. Payments remain pending until an authorized administrator verifies the submitted TXID.
 
 ## Stack
 
@@ -127,24 +136,6 @@ Payment verification:
 /admin/payments
 ```
 
-Admin authorization is based on the server-side admin email allowlist. Admin passwords are never committed to GitHub.
-
-## Billing and BEP20 USDT payments
-
-Paid checkout uses **BEP20 USDT on BNB Smart Chain only**.
-
-Flow:
-
-1. User selects a paid plan.
-2. GigRanker reads the current admin-configured wallet and displays the USDT amount.
-3. User sends USDT on BSC/BEP20.
-4. User submits the blockchain TXID.
-5. Payment remains `pending`.
-6. Authorized admin verifies the transaction.
-7. Subscription activates only after approval.
-
-The current application records the submitted TXID for administrator verification. It does **not** claim automatic on-chain verification.
-
 ## Security
 
 - Never commit `.env` or secrets.
@@ -180,19 +171,20 @@ configuration   ok
 1. Homepage and responsive layout
 2. Registration
 3. Login
-4. Dashboard
+4. User dashboard
 5. Project creation
 6. Admin Settings → save AI provider/key/model
-7. AI generation using the saved Admin Settings key
-8. Logout/login session lifecycle
-9. Free → paid plan selection
-10. Admin Settings → update BEP20 wallet
-11. BEP20 USDT payment instructions show the updated wallet
-12. TXID submission
-13. Admin payment approve/reject
-14. Subscription activation after approval
-15. Mobile/responsive view
-16. Production health check
+7. AI generation using saved Admin Settings key
+8. Free → paid plan selection
+9. Admin Settings → update BEP20 wallet
+10. BEP20 USDT payment instructions show updated wallet
+11. TXID submission
+12. Admin login
+13. Admin dashboard responsive layout
+14. Admin payment approve/reject
+15. Subscription activation after approval
+16. Mobile sidebar and responsive views
+17. Production health check
 
 ## Repository
 
