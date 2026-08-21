@@ -10,15 +10,15 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
-class AdminAuthController extends Controller
+final class AdminAuthController extends Controller
 {
     public function showLogin(): View|RedirectResponse
     {
         if (Auth::check() && $this->isAdmin((string) Auth::user()->email)) {
-            return redirect()->route('admin.payments.index');
+            return redirect()->route('admin.dashboard');
         }
 
-        return view('admin.auth.login');
+        return view('admin.login');
     }
 
     public function login(Request $request): RedirectResponse
@@ -26,27 +26,21 @@ class AdminAuthController extends Controller
         $credentials = $request->validate([
             'email' => ['required', 'email', 'max:255'],
             'password' => ['required', 'string', 'max:255'],
+            'remember' => ['nullable', 'boolean'],
         ]);
-
-        $credentials['email'] = Str::lower(trim($credentials['email']));
-
-        if (! $this->isAdmin($credentials['email'])) {
-            return back()->withErrors(['email' => 'This account is not authorized for admin access.'])->onlyInput('email');
+        $email = Str::lower(trim($credentials['email']));
+        if (! $this->isAdmin($email)) {
+            return back()->withErrors(['email' => 'This account is not authorized for the admin area.'])->onlyInput('email');
         }
-
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (! Auth::attempt(['email' => $email, 'password' => $credentials['password']], (bool) ($credentials['remember'] ?? false))) {
             return back()->withErrors(['email' => 'The provided admin credentials are incorrect.'])->onlyInput('email');
         }
-
         $request->session()->regenerate();
-
-        return redirect()->intended(route('admin.payments.index'));
+        return redirect()->intended(route('admin.dashboard'));
     }
 
     private function isAdmin(string $email): bool
     {
-        $email = Str::lower(trim($email));
-
-        return $email !== '' && in_array($email, config('gigranker.admin.emails', []), true);
+        return $email !== '' && in_array(Str::lower(trim($email)), config('gigranker.admin.emails', []), true);
     }
 }
