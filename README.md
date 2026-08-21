@@ -3,31 +3,67 @@
 **Version: 1.0**  
 **Status: Production Candidate — live testing**
 
-Turn a freelance gig into an SEO-focused marketing website with AI-assisted content generation, project pages, blogs, SEO metadata, schema markup, sitemap/robots output, outbound click tracking, subscriptions, **BEP20 USDT-only payment intake**, deployment history, backups, rollback and production health checks.
+Turn a freelance gig into an SEO-focused marketing website with AI-assisted content generation, project pages, SEO metadata, outbound click tracking, subscriptions, **BEP20 USDT-only payment intake**, deployment history, backups, rollback and production health checks.
 
-## Latest UI update — TailAdmin-inspired admin design
+## Latest UI / CMS update
 
-The supplied **TailAdmin Laravel** template was reviewed and its visual language was applied to GigRanker without replacing GigRanker's application structure or copying the template's unrelated demo pages.
+- GoSaaS-inspired modern SaaS public homepage layout.
+- TailAdmin-inspired white admin control center.
+- Homepage hero/site text can be changed from Admin → Settings.
+- Homepage CMS can manage **Features, Pricing, FAQ, Testimonials and Footer Links** without editing Blade/PHP files.
+- CMS entries support active/inactive status and sort order.
+- CMS item data is stored as structured JSON in the database and rendered at runtime.
+- Public homepage automatically reads active CMS content.
+- Existing defaults remain available when CMS content has not yet been configured.
 
-Admin UI now includes:
+## Homepage CMS
 
-- Fixed white sidebar with grouped navigation.
-- Active route states and quick links.
-- Sticky top bar and admin identity badge.
-- Responsive mobile sidebar with overlay toggle.
-- TailAdmin-style spacing, borders, cards, badges and brand palette.
-- Responsive dashboard metric cards.
-- Cleaner SaaS plan and recent-order tables.
-- Redesigned payment verification table.
-- Redesigned AI / USDT settings screen.
-
-Admin layout:
+Admin page:
 
 ```text
-resources/views/layouts/admin.blade.php
+/admin/homepage
 ```
 
-The public/user application layout and functionality remain separate from the admin control-center layout.
+Manage:
+
+- Features — icon, title and description
+- Pricing — plan name, price, currency, features, badge, featured state and CTA
+- FAQ — question and answer
+- Testimonials — quote, name and role
+- Footer links — label and URL
+- Section title/subtitle/description
+- Sort order
+- Active/inactive state
+
+Example feature item:
+
+```json
+[
+  {
+    "icon": "✦",
+    "title": "AI content generation",
+    "description": "Create targeted SEO content."
+  }
+]
+```
+
+Example pricing item:
+
+```json
+[
+  {
+    "name": "Pro",
+    "price": "19",
+    "currency": "USDT",
+    "features": ["More AI credits", "More projects"],
+    "featured": true,
+    "badge": "Popular",
+    "cta": "Choose Pro"
+  }
+]
+```
+
+The CMS uses the `homepage_sections` table and is loaded on each homepage request, so an admin content change does not require a code deployment.
 
 ## Admin Settings
 
@@ -37,6 +73,12 @@ The public/user application layout and functionality remain separate from the ad
 
 Available controls:
 
+- Site name/tagline
+- Hero kicker/title/description
+- Hero CTA labels
+- Feature and workflow headings/descriptions
+- Final CTA content
+- Footer text
 - Primary AI provider: Gemini / Groq / OpenAI
 - Gemini, Groq and OpenAI API keys + models
 - BEP20 USDT receiving address
@@ -108,7 +150,7 @@ DB_PASSWORD=your_database_password
 ADMIN_EMAILS=your-admin@example.com
 ```
 
-After the app migration is complete, AI credentials and the BEP20 wallet can be maintained from Admin → Settings.
+After migration, AI credentials, homepage content and the BEP20 wallet can be maintained from the admin panel.
 
 ## Admin control center
 
@@ -124,7 +166,13 @@ Admin dashboard:
 /admin
 ```
 
-Admin settings:
+Homepage CMS:
+
+```text
+/admin/homepage
+```
+
+Settings:
 
 ```text
 /admin/settings
@@ -142,8 +190,9 @@ Payment verification:
 - Admin-managed API keys are encrypted at rest.
 - Runtime AI credentials are loaded from encrypted settings when available.
 - Payment wallet is loaded from admin settings at checkout time.
-- Validate and authorize admin settings and payment actions.
-- Rate-limit authentication, generation, payment and settings endpoints.
+- Validate and authorize admin settings and CMS actions.
+- Rate-limit authentication, generation, payment and CMS endpoints.
+- Treat CMS JSON as untrusted input and validate it before storage.
 - Never activate paid subscriptions from a client-side payment claim alone.
 - Verify the BEP20 network, receiving address, USDT token, amount and transaction status before payment approval.
 
@@ -175,16 +224,19 @@ configuration   ok
 5. Project creation
 6. Admin Settings → save AI provider/key/model
 7. AI generation using saved Admin Settings key
-8. Free → paid plan selection
-9. Admin Settings → update BEP20 wallet
-10. BEP20 USDT payment instructions show updated wallet
-11. TXID submission
-12. Admin login
-13. Admin dashboard responsive layout
-14. Admin payment approve/reject
-15. Subscription activation after approval
-16. Mobile sidebar and responsive views
-17. Production health check
+8. Admin Homepage CMS → add/edit/delete feature
+9. Admin Homepage CMS → add/edit pricing
+10. Admin Homepage CMS → add/edit FAQ
+11. Admin Homepage CMS → add/edit testimonial
+12. Homepage reflects CMS changes immediately
+13. Free → paid plan selection
+14. Admin Settings → update BEP20 wallet
+15. BEP20 USDT payment instructions show updated wallet
+16. TXID submission
+17. Admin payment approve/reject
+18. Subscription activation after approval
+19. Mobile admin/user/public views
+20. Production health check
 
 ## Repository
 
