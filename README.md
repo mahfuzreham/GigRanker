@@ -136,29 +136,57 @@ BEP20_NETWORK=BSC
 
 AI provider credentials and mail settings must also remain server-side. Never commit `.env`, API keys, payment credentials or wallet secrets.
 
-## Admin login
+## Admin control center
 
-GigRanker has a dedicated administrator login at:
+GigRanker now has a dedicated admin entry point and protected control center.
+
+Admin login:
 
 ```text
 /admin/login
 ```
 
-The administrator must use an account whose email is present in the server-side `ADMIN_EMAILS` allowlist. The normal `/login` remains available for regular users. Admin payment review is available at:
+Admin dashboard:
+
+```text
+/admin
+```
+
+Payment verification:
 
 ```text
 /admin/payments
 ```
 
-Create or reset an administrator from cPanel Terminal without storing a password in GitHub:
+Admin authorization is based on the server-side `ADMIN_EMAILS` / `ADMIN_EMAIL` allowlist. The dedicated admin login still uses the authorized user's normal account password; no admin password is committed to GitHub.
 
-```bash
-cd /home/gigranker/public_html
-php artisan gigranker:admin:create admin@example.com --password='CHANGE_THIS_TO_A_STRONG_PASSWORD'
-php artisan optimize:clear
+### First-time admin setup
+
+1. Register a normal GigRanker account using `/register`.
+2. On the server, add that account email to `.env`:
+
+```env
+ADMIN_EMAILS=admin@example.com
 ```
 
-The command creates or updates the user, adds the email to `ADMIN_EMAILS` in the server `.env`, and reports the admin login URL. Use a unique password of at least 12 characters and do not commit it to the repository.
+Multiple admins can be comma-separated:
+
+```env
+ADMIN_EMAILS=admin@example.com,owner@example.com
+```
+
+3. Clear Laravel configuration cache:
+
+```bash
+php artisan optimize:clear
+php artisan optimize
+```
+
+4. Open `/admin/login` and sign in with that account's existing password.
+
+The admin dashboard provides SaaS overview metrics, plan information, recent orders and a direct link to payment verification. Payment approval/rejection remains protected by the same server-side admin allowlist.
+
+Do not put an admin password, API key or other secret into GitHub or README files.
 
 ## PHP / extension checklist
 
@@ -320,8 +348,10 @@ Before public launch, test on the actual production domain:
 6. AI generation with configured provider credentials
 7. Logout/login session lifecycle
 8. Deployment and backup section
-9. Dedicated admin login and authorized admin functions
-10. Mobile/responsive view
+9. Dedicated admin login
+10. Admin dashboard
+11. Admin payment approve/reject
+12. Mobile/responsive view
 
 ## Repository
 
