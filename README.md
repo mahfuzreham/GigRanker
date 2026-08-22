@@ -5,16 +5,17 @@
 
 Turn a freelance gig into an SEO-focused marketing website with AI-assisted content generation, project pages, SEO metadata, outbound click tracking, subscriptions, **BEP20 USDT-only payment intake**, deployment history, backups, rollback and production health checks.
 
-## Latest UI / CMS update
+## Latest homepage stability fix
 
-- GoSaaS-inspired modern SaaS public homepage layout.
-- TailAdmin-inspired white admin control center.
-- Homepage hero/site text can be changed from Admin → Settings.
-- Homepage CMS can manage **Features, Pricing, FAQ, Testimonials and Footer Links** without editing Blade/PHP files.
-- CMS entries support active/inactive status and sort order.
-- CMS item data is stored as structured JSON in the database and rendered at runtime.
-- Public homepage automatically reads active CMS content.
-- Existing defaults remain available when CMS content has not yet been configured.
+A production 500 error was traced to the homepage view/CMS integration. The homepage previously referenced a `HomepageSection` model that was not present in the deployed repository and used unnecessarily complex nested Blade directives. The public homepage has now been made self-contained and defensive:
+
+- Removed the missing `HomepageSection` model dependency from the public request path.
+- Homepage CMS data now uses structured JSON settings with safe defaults.
+- Simplified Blade loops/conditionals to avoid compiled-view parse errors.
+- Existing homepage settings, AI settings and BEP20 settings remain supported.
+- CMS content remains database-driven and does not require code edits when configured.
+
+After updating cPanel, always clear compiled views/cache before testing the homepage.
 
 ## Homepage CMS
 
@@ -24,46 +25,15 @@ Admin page:
 /admin/homepage
 ```
 
-Manage:
+The public homepage supports structured settings for:
 
 - Features — icon, title and description
 - Pricing — plan name, price, currency, features, badge, featured state and CTA
 - FAQ — question and answer
 - Testimonials — quote, name and role
 - Footer links — label and URL
-- Section title/subtitle/description
-- Sort order
-- Active/inactive state
 
-Example feature item:
-
-```json
-[
-  {
-    "icon": "✦",
-    "title": "AI content generation",
-    "description": "Create targeted SEO content."
-  }
-]
-```
-
-Example pricing item:
-
-```json
-[
-  {
-    "name": "Pro",
-    "price": "19",
-    "currency": "USDT",
-    "features": ["More AI credits", "More projects"],
-    "featured": true,
-    "badge": "Popular",
-    "cta": "Choose Pro"
-  }
-]
-```
-
-The CMS uses the `homepage_sections` table and is loaded on each homepage request, so an admin content change does not require a code deployment.
+The homepage uses safe built-in defaults when a CMS JSON setting is empty or invalid.
 
 ## Admin Settings
 
@@ -112,7 +82,6 @@ Production path:
 ```bash
 cd /home/gigranker/public_html
 
-git status
 git fetch origin main
 git checkout main
 git pull --ff-only origin main
@@ -126,6 +95,8 @@ php artisan optimize:clear
 php artisan optimize
 php artisan gigranker:health --json
 ```
+
+If the homepage previously showed a 500 error, the `optimize:clear` step is required to remove the old compiled Blade view.
 
 The final health check must report `application`, `database`, `cache`, `storage` and `configuration` as `ok` before considering the update production-ready.
 
@@ -224,7 +195,7 @@ configuration   ok
 5. Project creation
 6. Admin Settings → save AI provider/key/model
 7. AI generation using saved Admin Settings key
-8. Admin Homepage CMS → add/edit/delete feature
+8. Admin Homepage CMS → add/edit feature
 9. Admin Homepage CMS → add/edit pricing
 10. Admin Homepage CMS → add/edit FAQ
 11. Admin Homepage CMS → add/edit testimonial
