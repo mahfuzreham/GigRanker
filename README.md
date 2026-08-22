@@ -5,17 +5,41 @@
 
 Turn a freelance gig into an SEO-focused marketing website with AI-assisted content generation, project pages, SEO metadata, outbound click tracking, subscriptions, **BEP20 USDT-only payment intake**, deployment history, backups, rollback and production health checks.
 
-## Latest homepage stability and UI fix
+## Latest homepage and client-resource update
 
-The public homepage now uses a dedicated `layouts/public.blade.php` layout instead of the authenticated application layout. This prevents the dashboard/workspace header from rendering above the public homepage and removes the duplicate-header issue.
+The public homepage uses a dedicated public layout so the authenticated workspace header/sidebar is never rendered above the public site. The client dashboard now includes an administrator-managed **Free HTML Sites** resource area.
 
-The public UI now includes:
+### Admin-managed Free HTML Sites
+
+Admin page:
+
+```text
+/admin/hosted-sites
+```
+
+Administrators can add multiple client-facing resources with:
+
+- Site name
+- **Site Link** — hosted HTML website URL
+- **Setup Link** — optional setup/instructions URL
+- Description
+- Sort order
+- Active/hidden status
+- Delete action
+
+Only active resources are shown to clients. Clients see the links in their dashboard under **Free HTML Sites**, with separate **Open Site** and **Setup Link** buttons.
+
+The links are global client resources, so an administrator can publish multiple free hosted HTML sites without editing client accounts individually.
+
+## Homepage UI
+
+The public UI includes:
 
 - Dedicated public navigation with one header only.
 - Responsive mobile navigation styling.
 - SaaS-style hero, features, workflow, pricing, testimonials and FAQ sections.
 - Admin-managed CMS content with safe defaults.
-- A redesigned multi-column footer with Product, Company and Resources links.
+- Redesigned multi-column footer with Product, Company and Resources links.
 - Responsive footer and current-year display.
 - No authenticated sidebar/topbar on the public homepage.
 
@@ -126,7 +150,7 @@ DB_PASSWORD=your_database_password
 ADMIN_EMAILS=your-admin@example.com
 ```
 
-After migration, AI credentials, homepage content and the BEP20 wallet can be maintained from the admin panel.
+After migration, AI credentials, homepage content, hosted client links and the BEP20 wallet can be maintained from the admin panel.
 
 ## Admin control center
 
@@ -148,6 +172,12 @@ Homepage CMS:
 /admin/homepage
 ```
 
+Free HTML Sites:
+
+```text
+/admin/hosted-sites
+```
+
 Settings:
 
 ```text
@@ -166,9 +196,10 @@ Payment verification:
 - Admin-managed API keys are encrypted at rest.
 - Runtime AI credentials are loaded from encrypted settings when available.
 - Payment wallet is loaded from admin settings at checkout time.
-- Validate and authorize admin settings and CMS actions.
+- Validate and authorize admin settings, CMS and hosted-site actions.
 - Rate-limit authentication, generation, payment and CMS endpoints.
-- Treat CMS JSON as untrusted input and validate it before storage.
+- Treat CMS content as untrusted input and validate it before storage.
+- Hosted site and setup links accept only HTTP/HTTPS URLs and are escaped by Blade.
 - Never activate paid subscriptions from a client-side payment claim alone.
 - Verify the BEP20 network, receiving address, USDT token, amount and transaction status before payment approval.
 
@@ -200,22 +231,25 @@ configuration   ok
 4. Registration
 5. Login
 6. User dashboard
-7. Project creation
-8. Admin Settings → save AI provider/key/model
-9. AI generation using saved Admin Settings key
-10. Admin Homepage CMS → add/edit feature
-11. Admin Homepage CMS → add/edit pricing
-12. Admin Homepage CMS → add/edit FAQ
-13. Admin Homepage CMS → add/edit testimonial
-14. Homepage reflects CMS changes immediately
-15. Free → paid plan selection
-16. Admin Settings → update BEP20 wallet
-17. BEP20 USDT payment instructions show updated wallet
-18. TXID submission
-19. Admin payment approve/reject
-20. Subscription activation after approval
-21. Mobile admin/user/public views
-22. Production health check
+7. Free HTML Sites section visible to clients
+8. Admin → Free HTML Sites → add multiple site links
+9. Admin → Free HTML Sites → hide/show/delete links
+10. Project creation
+11. Admin Settings → save AI provider/key/model
+12. AI generation using saved Admin Settings key
+13. Admin Homepage CMS → add/edit feature
+14. Admin Homepage CMS → add/edit pricing
+15. Admin Homepage CMS → add/edit FAQ
+16. Admin Homepage CMS → add/edit testimonial
+17. Homepage reflects CMS changes immediately
+18. Free → paid plan selection
+19. Admin Settings → update BEP20 wallet
+20. BEP20 USDT payment instructions show updated wallet
+21. TXID submission
+22. Admin payment approve/reject
+23. Subscription activation after approval
+24. Mobile admin/user/public views
+25. Production health check
 
 ## Repository
 
