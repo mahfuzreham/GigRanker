@@ -5,17 +5,21 @@
 
 Turn a freelance gig into an SEO-focused marketing website with AI-assisted content generation, project pages, SEO metadata, outbound click tracking, subscriptions, **BEP20 USDT-only payment intake**, deployment history, backups, rollback and production health checks.
 
-## Latest homepage stability fix
+## Latest homepage stability and UI fix
 
-A production 500 error was traced to the public layout's nested Blade authentication/conditional directives. The layout has now been simplified to explicit server-side variables before rendering:
+The public homepage now uses a dedicated `layouts/public.blade.php` layout instead of the authenticated application layout. This prevents the dashboard/workspace header from rendering above the public homepage and removes the duplicate-header issue.
 
-- Removed nested `@auth` / `@if` directive combinations from the public layout.
-- Authentication/admin state is calculated once before the markup.
-- Public homepage no longer depends on authenticated-user Blade directive nesting.
-- Homepage CMS data remains structured JSON with safe defaults.
-- Existing homepage settings, AI settings and BEP20 settings remain supported.
+The public UI now includes:
 
-After updating cPanel, always clear compiled views/cache before testing the homepage.
+- Dedicated public navigation with one header only.
+- Responsive mobile navigation styling.
+- SaaS-style hero, features, workflow, pricing, testimonials and FAQ sections.
+- Admin-managed CMS content with safe defaults.
+- A redesigned multi-column footer with Product, Company and Resources links.
+- Responsive footer and current-year display.
+- No authenticated sidebar/topbar on the public homepage.
+
+If the homepage previously showed an old header after deployment, clear compiled views with `php artisan optimize:clear` before testing.
 
 ## Homepage CMS
 
@@ -97,7 +101,7 @@ php artisan view:cache
 php artisan gigranker:health --json
 ```
 
-If the homepage previously showed a 500 error, the `optimize:clear` and `view:cache` steps are required to remove and rebuild old compiled Blade views.
+If the homepage previously showed a 500 error or duplicate header, the `optimize:clear` step is required to remove old compiled Blade views.
 
 The final health check must report `application`, `database`, `cache`, `storage` and `configuration` as `ok` before considering the update production-ready.
 
@@ -191,25 +195,27 @@ configuration   ok
 ## Live functional test checklist
 
 1. Homepage and responsive layout
-2. Registration
-3. Login
-4. User dashboard
-5. Project creation
-6. Admin Settings → save AI provider/key/model
-7. AI generation using saved Admin Settings key
-8. Admin Homepage CMS → add/edit feature
-9. Admin Homepage CMS → add/edit pricing
-10. Admin Homepage CMS → add/edit FAQ
-11. Admin Homepage CMS → add/edit testimonial
-12. Homepage reflects CMS changes immediately
-13. Free → paid plan selection
-14. Admin Settings → update BEP20 wallet
-15. BEP20 USDT payment instructions show updated wallet
-16. TXID submission
-17. Admin payment approve/reject
-18. Subscription activation after approval
-19. Mobile admin/user/public views
-20. Production health check
+2. Public header appears once only
+3. Public footer and footer links
+4. Registration
+5. Login
+6. User dashboard
+7. Project creation
+8. Admin Settings → save AI provider/key/model
+9. AI generation using saved Admin Settings key
+10. Admin Homepage CMS → add/edit feature
+11. Admin Homepage CMS → add/edit pricing
+12. Admin Homepage CMS → add/edit FAQ
+13. Admin Homepage CMS → add/edit testimonial
+14. Homepage reflects CMS changes immediately
+15. Free → paid plan selection
+16. Admin Settings → update BEP20 wallet
+17. BEP20 USDT payment instructions show updated wallet
+18. TXID submission
+19. Admin payment approve/reject
+20. Subscription activation after approval
+21. Mobile admin/user/public views
+22. Production health check
 
 ## Repository
 
