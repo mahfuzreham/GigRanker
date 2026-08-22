@@ -7,13 +7,13 @@ Turn a freelance gig into an SEO-focused marketing website with AI-assisted cont
 
 ## Latest homepage stability fix
 
-A production 500 error was traced to the homepage view/CMS integration. The homepage previously referenced a `HomepageSection` model that was not present in the deployed repository and used unnecessarily complex nested Blade directives. The public homepage has now been made self-contained and defensive:
+A production 500 error was traced to the public layout's nested Blade authentication/conditional directives. The layout has now been simplified to explicit server-side variables before rendering:
 
-- Removed the missing `HomepageSection` model dependency from the public request path.
-- Homepage CMS data now uses structured JSON settings with safe defaults.
-- Simplified Blade loops/conditionals to avoid compiled-view parse errors.
+- Removed nested `@auth` / `@if` directive combinations from the public layout.
+- Authentication/admin state is calculated once before the markup.
+- Public homepage no longer depends on authenticated-user Blade directive nesting.
+- Homepage CMS data remains structured JSON with safe defaults.
 - Existing homepage settings, AI settings and BEP20 settings remain supported.
-- CMS content remains database-driven and does not require code edits when configured.
 
 After updating cPanel, always clear compiled views/cache before testing the homepage.
 
@@ -93,10 +93,11 @@ php artisan migrate --force
 php artisan storage:link
 php artisan optimize:clear
 php artisan optimize
+php artisan view:cache
 php artisan gigranker:health --json
 ```
 
-If the homepage previously showed a 500 error, the `optimize:clear` step is required to remove the old compiled Blade view.
+If the homepage previously showed a 500 error, the `optimize:clear` and `view:cache` steps are required to remove and rebuild old compiled Blade views.
 
 The final health check must report `application`, `database`, `cache`, `storage` and `configuration` as `ok` before considering the update production-ready.
 
@@ -173,6 +174,7 @@ Payment verification:
 php artisan migrate --force
 php artisan optimize:clear
 php artisan optimize
+php artisan view:cache
 php artisan gigranker:health --json
 ```
 
